@@ -10,14 +10,7 @@ Beyond basic comparison, ShopSense AI leverages **Artificial Intelligence** to e
 
 - [✨ Features](#-features)
 - [🖥️ Tech Stack](#️-tech-stack)
-- [📸 Screenshots](#-screenshots)
-- [🚀 Installation & Setup](#-installation--setup)
-- [💡 AI Modules](#-ai-modules)
-- [📈 Future Enhancements](#-future-enhancements)
-- [📄 License](#-license)
-- [👨‍💻 Authors](#-authors)
 
----
 
 ## ✨ Features
 
@@ -48,24 +41,6 @@ Beyond basic comparison, ShopSense AI leverages **Artificial Intelligence** to e
 
 ---
 
-## 📸 Screenshots
 
-> _Add screenshots here when your UI is finalized — to visually showcase homepage, product comparison page, AI search results, etc._
 
----
-
-## 🚀 Installation & Setup
-
-### 📋 Prerequisites
-
-- Node.js (v18+)
-- MongoDB (local or cloud instance)
-- Python 3.x
-- Angular CLI
-
-### 📦 Clone the Repository
-
-```bash
-git clone https://github.com/your-username/ShopSense-AI.git
-cd ShopSense-AI
 
