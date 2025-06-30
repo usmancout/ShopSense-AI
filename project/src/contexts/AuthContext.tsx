@@ -36,14 +36,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
 
   const login = async (email: string, password: string) => {
-    const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const res = await axios.post('https://ssa-server-production.up.railway.app/api/auth/login', { email, password });
     const { token, user } = res.data;
     localStorage.setItem('token', token);
     setUser({ id: '1', ...user });
   };
 
   const signup = async (data: { username: string; email: string; password: string }) => {
-    const res = await axios.post('http://localhost:5000/api/auth/signup', data);
+    const res = await axios.post('https://ssa-server-production.up.railway.app/api/auth/signup', data);
     setUser({ id: '1', ...res.data.user });
   };
 
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const getProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/auth/profile', {
+      const res = await axios.get('https://ssa-server-production.up.railway.app/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser({ id: '1', ...res.data.user });

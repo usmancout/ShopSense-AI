@@ -39,7 +39,7 @@ const Profile: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-          'http://localhost:5000/api/auth/profile',
+          'https://ssa-server-production.up.railway.app/api/auth/profile',
           {
             username: formData.name,
             email: formData.email,
@@ -84,7 +84,7 @@ const Profile: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.put(
-          'http://localhost:5000/api/auth/avatar',
+          'https://ssa-server-production.up.railway.app/api/auth/avatar',
           formData,
           {
             headers: {
