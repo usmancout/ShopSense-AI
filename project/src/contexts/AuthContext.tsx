@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 👇 NEW Google login method
   const googleLogin = async (googleAccessToken: string) => {
-    const res = await axios.post('http://localhost:5000/api/auth/google-login', {
+    const res = await axios.post('https://ssa-server-production.up.railway.app/api/auth/google-login', {
       access_token: googleAccessToken
     });
     const { token, user } = res.data;
