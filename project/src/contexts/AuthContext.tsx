@@ -21,7 +21,8 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (updates: Partial<User>) => void;
   getProfile: () => Promise<void>;
-  setUser: (user: User | null) => void;  // <-- NEW
+  setUser: (user: User | null) => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,7 +48,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser({ id: '1', ...res.data.user });
   };
 
-  // 👇 NEW Google login method
   const googleLogin = async (googleAccessToken: string) => {
     const res = await axios.post('http://localhost:5000/api/auth/google-login', {
       access_token: googleAccessToken
@@ -72,11 +72,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const res = await axios.get('http://localhost:5000/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser({ id: '1', ...res.data.user });
+      setUser({ id: '1', ...res.data.user }); // This updates all user data, including avatar
     } catch (err) {
       console.error('Failed to fetch profile', err);
     }
   };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+          'http://localhost:5000/api/auth/password',
+          { currentPassword, newPassword },
+          { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) {
+      console.error('Failed to change password', err);
+      throw err;
+    }
+  };
+
 
   return (
       <AuthContext.Provider
@@ -85,11 +100,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             isAuthenticated: !!user,
             login,
             signup,
-            googleLogin,   // ⬅️ exposed
+            googleLogin,
             logout,
             updateProfile,
             getProfile,
-            setUser         // ⬅️ exposed
+            setUser,
+            changePassword
           }}
       >
         {children}
