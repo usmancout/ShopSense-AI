@@ -21,16 +21,16 @@ const Footer: React.FC = () => {
               Revolutionizing online shopping with AI-powered product discovery and smart recommendations across multiple stores.
             </p>
             <div className="flex space-x-3 sm:space-x-4">
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
+              <a href="https://web.facebook.com/profile.php?id=100049922391730" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <Facebook className="h-4 w-4 sm:h-5 sm:w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
+              <a href="https://x.com/usmancout" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <Twitter className="h-4 w-4 sm:h-5 sm:w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
+              <a href="https://www.instagram.com/usmancout/" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <Instagram className="h-4 w-4 sm:h-5 sm:w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">
+              <a href="https://www.linkedin.com/in/usmancout/" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <Linkedin className="h-4 w-4 sm:h-5 sm:w-5" />
               </a>
             </div>
@@ -80,15 +80,15 @@ const Footer: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-sm text-gray-400">
                 <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-purple-400 flex-shrink-0" />
-                <span className="break-all">support@shopsenseai.com</span>
+                <span className="break-all">shopsense@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3 text-sm text-gray-400">
                 <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-purple-400 flex-shrink-0" />
-                <span>+1 (555) 123-4567</span>
+                <span>+923446679756</span>
               </div>
               <div className="flex items-center space-x-3 text-sm text-gray-400">
                 <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-purple-400 flex-shrink-0" />
-                <span>San Francisco, CA</span>
+                <span>Lahore, Punjab</span>
               </div>
             </div>
           </div>

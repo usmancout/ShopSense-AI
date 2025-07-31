@@ -99,20 +99,28 @@ const LandingPage: React.FC = () => {
               </div>
             </form>
 
-            {/* CTA Buttons */}
+
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6 px-4">
               <Link
-                to="/signup"
-                className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 px-6 sm:px-8 py-3 rounded-full font-semibold transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+                  to="/signup"
+                  className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 px-6 sm:px-8 py-3 rounded-full font-semibold transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 <span>Get Started Free</span>
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
-              <button className="w-full sm:w-auto flex items-center justify-center space-x-2 text-gray-300 hover:text-white transition-colors text-sm sm:text-base">
+
+              {/* Updated anchor link for Watch Demo */}
+              <a
+                  href="https://www.youtube.com/watch?v=ofHGE-85EIA&t=12011s"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 text-gray-300 hover:text-white transition-colors text-sm sm:text-base"
+              >
                 <Play className="h-4 w-4 sm:h-5 sm:w-5 bg-white text-gray-900 rounded-full p-1" />
                 <span>Watch Demo</span>
-              </button>
+              </a>
             </div>
+
           </div>
         </div>
       </section>
