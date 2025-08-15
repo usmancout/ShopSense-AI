@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome back, {user?.username}!</h1>
           <p className="text-gray-400 text-sm sm:text-base">Here's your shopping overview and personalized recommendations.</p>
         </div>
 
@@ -179,7 +179,7 @@ const Dashboard: React.FC = () => {
               View All
             </Link>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {mockProducts.slice(0, 4).map(product => (
               <div key={product.id} className="bg-gray-800 rounded-xl overflow-hidden group hover:shadow-xl transition-all duration-300">
