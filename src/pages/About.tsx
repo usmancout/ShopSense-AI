@@ -96,7 +96,7 @@ const About: React.FC = () => {
       name: 'Faseeh Ali',
       role: 'Head of AI',
       image: faseehImg,
-      bio: 'PhD in Computer Science from Stanford, specializing in recommendation systems.',
+      bio: 'Instgramer !! Friend of CTO !! Chill Guy !!.',
       linkedin: 'https://www.linkedin.com/in/faseeh-ali-57ba152a0/' // Replace with actual LinkedIn URL
     },
     {
