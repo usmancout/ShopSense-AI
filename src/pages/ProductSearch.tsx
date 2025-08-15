@@ -399,6 +399,7 @@ const ProductSearch: React.FC = () => {
               )}
             </div>
           </div>
+
           {/* Recommendation Section */}
           <section className="mt-12 sm:mt-16">
             <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">You Might Also Like</h2>
