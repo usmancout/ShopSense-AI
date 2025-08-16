@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import axios from 'axios';
+import { ApiService } from '../services/api';
 
 interface User {
   id: string;
@@ -23,6 +24,7 @@ interface AuthContextType {
   getProfile: () => Promise<void>;
   setUser: (user: User | null) => void;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  trackUserActivity: (type: string, description: string, metadata?: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,6 +94,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const trackUserActivity = async (type: string, description: string, metadata?: any) => {
+    try {
+      await ApiService.trackActivity(type as any, description, metadata);
+    } catch (error) {
+      console.error('Failed to track activity:', error);
+      // Don't throw error to avoid disrupting user experience
+    }
+  };
 
   return (
       <AuthContext.Provider
@@ -105,7 +115,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateProfile,
             getProfile,
             setUser,
-            changePassword
+            changePassword,
+            trackUserActivity
           }}
       >
         {children}

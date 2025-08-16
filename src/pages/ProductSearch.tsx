@@ -5,6 +5,8 @@ import {
   ExternalLink, Heart, Grid, List
 } from 'lucide-react';
 import axios from 'axios';
+import { useWishlist } from '../hooks/useWishlist';
+import { useAuth } from '../contexts/AuthContext';
 import {
   mockProducts,
   categories,
@@ -14,6 +16,8 @@ import {
 } from '../data/products';
 
 const ProductSearch: React.FC = () => {
+  const { trackUserActivity } = useAuth();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts);
@@ -25,7 +29,7 @@ const ProductSearch: React.FC = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [wishlist, setWishlist] = useState<Set<string>>(new Set());
+  const [isWishlistLoading, setIsWishlistLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -38,6 +42,9 @@ const ProductSearch: React.FC = () => {
   const fetchProducts = async () => {
     try {
       if (searchQuery.trim() !== '') {
+        // Track search activity
+        await trackUserActivity('search', `Searched for "${searchQuery}"`, { query: searchQuery });
+        
         const response = await axios.get(`https://dummymart1.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`);
         const fetched = response.data?.products || response.data || [];
 
@@ -54,6 +61,7 @@ const ProductSearch: React.FC = () => {
           reviewCount: p.reviewCount || 0,
           description: p.description || '',
           image: p.imageUrl || p.image || 'https://via.placeholder.com/150',          tags: p.tags || [],
+          features: p.features || [],
           inStock: p.inStock ?? true
         }));
 
@@ -107,14 +115,24 @@ const ProductSearch: React.FC = () => {
     setSearchParams(params);
   };
 
-  const toggleWishlist = (productId: string) => {
-    const newWishlist = new Set(wishlist);
-    if (newWishlist.has(productId)) {
-      newWishlist.delete(productId);
-    } else {
-      newWishlist.add(productId);
+  const toggleWishlist = async (product: Product) => {
+    try {
+      setIsWishlistLoading(product.id);
+      
+      if (isInWishlist(product.id)) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product.id);
+      }
+    } catch (error) {
+      console.error('Wishlist toggle failed:', error);
+    } finally {
+      setIsWishlistLoading(null);
     }
-    setWishlist(newWishlist);
+  };
+
+  const handleProductView = async (product: Product) => {
+    await trackUserActivity('view', `Viewed product: ${product.name}`, { productId: product.id });
   };
 
   const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
@@ -130,14 +148,19 @@ const ProductSearch: React.FC = () => {
               }`}
           />
           <button
-              onClick={() => toggleWishlist(product.id)}
-              className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-gray-900/80 rounded-full backdrop-blur-sm hover:bg-gray-900 transition-colors"
+              onClick={() => toggleWishlist(product)}
+              disabled={isWishlistLoading === product.id}
+              className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-gray-900/80 rounded-full backdrop-blur-sm hover:bg-gray-900 disabled:bg-gray-900 transition-colors"
           >
-            <Heart
-                className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    wishlist.has(product.id) ? 'text-red-500 fill-current' : 'text-white'
-                }`}
-            />
+            {isWishlistLoading === product.id ? (
+              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+            ) : (
+              <Heart
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-white'
+                  }`}
+              />
+            )}
           </button>
           {!product.inStock && (
               <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
@@ -191,6 +214,7 @@ const ProductSearch: React.FC = () => {
             </div>
             <button
                 disabled={!product.inStock}
+                onClick={() => handleProductView(product)}
                 className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
             >
               <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -404,7 +428,7 @@ const ProductSearch: React.FC = () => {
           <section className="mt-12 sm:mt-16">
             <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">You Might Also Like</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {mockProducts.slice(0, 4).map(product => (
+              {products.slice(0, 4).map(product => (
                   <ProductCard key={`rec-${product.id}`} product={product} />
               ))}
             </div>

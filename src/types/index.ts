@@ -39,7 +39,12 @@ export interface UserActivity {
   userId: string;
   type: 'search' | 'view' | 'wishlist_add' | 'wishlist_remove';
   description: string;
-  metadata?: any;
+  metadata?: {
+    productId?: string;
+    query?: string;
+    path?: string;
+    [key: string]: any;
+  };
   createdAt: string;
 }
 
@@ -57,4 +62,24 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface SearchFilters {
+  category?: string;
+  store?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  inStock?: boolean;
+  sortBy?: string;
+  page?: number;
+  limit?: number;
 }

@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
-import { Heart, Star, ExternalLink, Trash2, TrendingUp, Filter, Grid, List } from 'lucide-react';
-import { mockProducts } from '../data/products';
+import { Heart, Star, ExternalLink, Trash2, TrendingUp, Filter, Grid, List, RefreshCw, AlertCircle, ShoppingBag } from 'lucide-react';
+import { useWishlist } from '../hooks/useWishlist';
+import { useAuth } from '../contexts/AuthContext';
+import { Product } from '../types';
 
 const Wishlist: React.FC = () => {
-  const [wishlistItems] = useState(mockProducts.slice(0, 6));
+  const { trackUserActivity } = useAuth();
+  const { 
+    wishlistItems, 
+    isLoading, 
+    error, 
+    removeFromWishlist, 
+    refreshWishlist, 
+    clearError 
+  } = useWishlist();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('dateAdded');
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
 
   const sortOptions = [
     { value: 'dateAdded', label: 'Recently Added' },
@@ -15,7 +26,44 @@ const Wishlist: React.FC = () => {
     { value: 'name', label: 'Name A-Z' },
   ];
 
-  const WishlistItem: React.FC<{ product: any }> = ({ product }) => (
+  const handleRemoveFromWishlist = async (productId: string, productName: string) => {
+    try {
+      setIsRemoving(productId);
+      await removeFromWishlist(productId);
+      await trackUserActivity('wishlist_remove', `Removed ${productName} from wishlist`, { productId });
+    } catch (error) {
+      console.error('Failed to remove from wishlist:', error);
+    } finally {
+      setIsRemoving(null);
+    }
+  };
+
+  const handleViewProduct = async (product: Product) => {
+    await trackUserActivity('view', `Viewed product: ${product.name}`, { productId: product.id });
+  };
+
+  const sortedWishlistItems = [...wishlistItems].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low':
+        return a.product.price - b.product.price;
+      case 'price-high':
+        return b.product.price - a.product.price;
+      case 'rating':
+        return b.product.rating - a.product.rating;
+      case 'name':
+        return a.product.name.localeCompare(b.product.name);
+      case 'dateAdded':
+      default:
+        return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+    }
+  });
+
+  const totalValue = wishlistItems.reduce((sum, item) => sum + item.product.price, 0);
+
+  const WishlistItemComponent: React.FC<{ item: any }> = ({ item }) => {
+    const { product } = item;
+    
+    return (
     <div className={`bg-gray-800 rounded-xl overflow-hidden group hover:shadow-xl transition-all duration-300 ${
       viewMode === 'list' ? 'flex' : ''
     }`}>
@@ -27,14 +75,25 @@ const Wishlist: React.FC = () => {
             viewMode === 'list' ? 'h-full' : 'h-48'
           }`}
         />
-        <button className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors">
-          <Heart className="h-5 w-5 text-white fill-current" />
+        <button 
+          onClick={() => handleRemoveFromWishlist(product.id, product.name)}
+          disabled={isRemoving === product.id}
+          className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 rounded-full transition-colors"
+        >
+          {isRemoving === product.id ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          ) : (
+            <Heart className="h-5 w-5 text-white fill-current" />
+          )}
         </button>
         {product.originalPrice && (
           <div className="absolute bottom-3 left-3 bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
             {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
           </div>
         )}
+        <div className="absolute bottom-3 right-3 bg-gray-900/80 text-white px-2 py-1 rounded text-xs">
+          Added {new Date(item.addedAt).toLocaleDateString()}
+        </div>
       </div>
 
       <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
@@ -82,28 +141,78 @@ const Wishlist: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          <button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2">
+          <button 
+            onClick={() => handleViewProduct(product)}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+          >
             <ExternalLink className="h-4 w-4" />
             <span>View Product</span>
           </button>
-          <button className="p-2 bg-gray-700 hover:bg-red-600 text-gray-400 hover:text-white rounded-lg transition-colors">
-            <Trash2 className="h-5 w-5" />
+          <button 
+            onClick={() => handleRemoveFromWishlist(product.id, product.name)}
+            disabled={isRemoving === product.id}
+            className="p-2 bg-gray-700 hover:bg-red-600 disabled:bg-red-800 text-gray-400 hover:text-white rounded-lg transition-colors"
+          >
+            {isRemoving === product.id ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            ) : (
+              <Trash2 className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
     </div>
-  );
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-gray-400">Loading your wishlist...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
           <h1 className="text-3xl font-bold mb-2">My Wishlist</h1>
           <p className="text-gray-400">
-            {wishlistItems.length} items saved • Total value: ${wishlistItems.reduce((sum, item) => sum + item.price, 0).toLocaleString()}
+              {wishlistItems.length} items saved • Total value: ${totalValue.toLocaleString()}
           </p>
+          </div>
+          <button
+            onClick={refreshWishlist}
+            className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-lg transition-colors text-sm"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <span>{error}</span>
+            <button 
+              onClick={clearError}
+              className="ml-auto text-red-200 hover:text-white underline text-sm"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
@@ -149,14 +258,14 @@ const Wishlist: React.FC = () => {
         </div>
 
         {/* Wishlist Items */}
-        {wishlistItems.length > 0 ? (
+        {sortedWishlistItems.length > 0 ? (
           <div className={`grid gap-6 ${
             viewMode === 'grid' 
               ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
               : 'grid-cols-1'
           }`}>
-            {wishlistItems.map(product => (
-              <WishlistItem key={product.id} product={product} />
+            {sortedWishlistItems.map(item => (
+              <WishlistItemComponent key={item.id} item={item} />
             ))}
           </div>
         ) : (
@@ -167,15 +276,19 @@ const Wishlist: React.FC = () => {
               <p className="text-gray-400 mb-6">
                 Start adding products you love to keep track of them and get price alerts.
               </p>
-              <button className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg transition-colors">
+              <Link 
+                to="/search"
+                className="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg transition-colors"
+              >
                 Browse Products
-              </button>
+              </Link>
             </div>
           </div>
         )}
 
         {/* Price Tracking Info */}
-        <div className="mt-12 bg-gradient-to-r from-blue-900 to-purple-900 rounded-xl p-6">
+        {wishlistItems.length > 0 && (
+          <div className="mt-12 bg-gradient-to-r from-blue-900 to-purple-900 rounded-xl p-6">
           <div className="flex items-center space-x-4">
             <div className="bg-blue-500 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6 text-white" />
@@ -188,10 +301,12 @@ const Wishlist: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Sharing */}
-        <div className="mt-8 text-center">
+        {wishlistItems.length > 0 && (
+          <div className="mt-8 text-center">
           <h3 className="text-lg font-semibold mb-4">Share Your Wishlist</h3>
           <div className="flex items-center justify-center space-x-4">
             <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
@@ -204,7 +319,8 @@ const Wishlist: React.FC = () => {
               Copy Link
             </button>
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
