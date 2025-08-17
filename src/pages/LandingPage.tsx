@@ -113,37 +113,7 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-      <div className="min-h-screen overflow-x-hidden">
-        {/* Animated Background Gradient */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 opacity-100">
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-              {[...Array(10)].map((_, i) => (
-                  <motion.div
-                      key={i}
-                      className="absolute rounded-full bg-purple-500 opacity-10"
-                      style={{
-                        width: `${Math.random() * 200 + 100}px`,
-                        height: `${Math.random() * 200 + 100}px`,
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`,
-                      }}
-                      animate={{
-                        x: [0, (Math.random() - 0.5) * 100],
-                        y: [0, (Math.random() - 0.5) * 100],
-                        transition: {
-                          duration: Math.random() * 20 + 10,
-                          repeat: Infinity,
-                          repeatType: 'reverse',
-                          ease: 'easeInOut'
-                        }
-                      }}
-                  />
-              ))}
-            </div>
-          </div>
-        </div>
-
+      <div className="min-h-screen overflow-x-hidden bg-gray-900">
         {/* Hero Section */}
         <section className="relative py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
@@ -157,9 +127,9 @@ const LandingPage: React.FC = () => {
                   className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
                   variants={item}
               >
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                Smart Shopping
-              </span>
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+              Smart Shopping
+            </span>
                 <br />
                 <span className="text-white">Made Simple</span>
               </motion.h1>
