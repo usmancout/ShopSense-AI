@@ -23,6 +23,7 @@ const LandingPage: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // Check if user is authenticated before navigating to search
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };

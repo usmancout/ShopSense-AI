@@ -5,6 +5,7 @@ import {
   ExternalLink, Heart, Grid, List
 } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import {
   mockProducts,
   categories,
@@ -14,6 +15,7 @@ import {
 } from '../data/products';
 
 const ProductSearch: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts);
@@ -26,6 +28,18 @@ const ProductSearch: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
+
+  // Show a loading state while authentication is being checked
+  if (!isAuthenticated) {
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Checking authentication...</p>
+          </div>
+        </div>
+    );
+  }
 
   useEffect(() => {
     fetchProducts();

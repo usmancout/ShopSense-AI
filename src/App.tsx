@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from './components/Header';
+import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import SignUp from './pages/SignUp';
@@ -46,7 +47,11 @@ function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/signup" element={<SignUp />} />
                   <Route path="/signin" element={<SignIn />} />
-                  <Route path="/search" element={<ProductSearch />} />
+                  <Route path="/search" element={
+                    <ProtectedRoute>
+                      <ProductSearch />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/wishlist" element={<Wishlist />} />
