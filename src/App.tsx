@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { AnimatePresence, motion, Variants, Transition } from 'framer-motion';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
@@ -20,35 +19,6 @@ import About from './pages/About';
 import AdminDashboard from './pages/AdminDashboard';
 import { AuthProvider } from './contexts/AuthContext';
 
-// Page transition animations
-const pageVariants: Variants = {
-  initial: {
-    opacity: 0,
-    x: 0,
-    filter: 'blur(4px)',
-  },
-  animate: {
-    opacity: 1,
-    x: 0,
-    filter: 'blur(0px)',
-    transition: {
-      duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
-      when: "beforeChildren",
-      staggerChildren: 0.05,
-    } as Transition,
-  },
-  exit: {
-    opacity: 0,
-    x: 0,
-    filter: 'blur(4px)',
-    transition: {
-      duration: 0.3,
-      ease: [0.55, 0.06, 0.68, 0.19],
-    } as Transition,
-  },
-};
-
 // Scroll to top on route change
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -63,171 +33,6 @@ const ScrollToTop = () => {
   return null;
 };
 
-const AnimatedRoutes = () => {
-  const location = useLocation();
-
-  return (
-      <AnimatePresence mode="wait" initial={false}>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <LandingPage />
-            </motion.div>
-          } />
-          <Route path="/signup" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <SignUp />
-            </motion.div>
-          } />
-          <Route path="/signin" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <SignIn />
-            </motion.div>
-          } />
-          <Route path="/search" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <ProductSearch />
-            </motion.div>
-          } />
-          <Route path="/dashboard" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <Dashboard />
-            </motion.div>
-          } />
-          <Route path="/profile" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <Profile />
-            </motion.div>
-          } />
-          <Route path="/wishlist" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <Wishlist />
-            </motion.div>
-          } />
-          <Route path="/contact" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <Contact />
-            </motion.div>
-          } />
-          <Route path="/about" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <About />
-            </motion.div>
-          } />
-          <Route path="/admin" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <AdminDashboard />
-            </motion.div>
-          } />
-          <Route path="/privacy-policy" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <PrivacyPolicy />
-            </motion.div>
-          } />
-          <Route path="/terms-of-service" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <TermsOfService />
-            </motion.div>
-          } />
-          <Route path="/cookie-policy" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <CookiePolicy />
-            </motion.div>
-          } />
-          <Route path="/gdpr-compliance" element={
-            <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                className="h-full w-full"
-            >
-              <GDPRCompliance />
-            </motion.div>
-          } />
-        </Routes>
-      </AnimatePresence>
-  );
-};
-
 function App() {
   return (
       <GoogleOAuthProvider clientId="370908799853-lsocbk1j2rcqh9atl4etren40squisko.apps.googleusercontent.com">
@@ -237,7 +42,22 @@ function App() {
               <Header />
               <main className="flex-1 overflow-hidden">
                 <ScrollToTop />
-                <AnimatedRoutes />
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/search" element={<ProductSearch />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-of-service" element={<TermsOfService />} />
+                  <Route path="/cookie-policy" element={<CookiePolicy />} />
+                  <Route path="/gdpr-compliance" element={<GDPRCompliance />} />
+                </Routes>
               </main>
               <Footer />
             </div>
