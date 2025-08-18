@@ -66,7 +66,7 @@ const ResetPasswordPage = () => {
                         Your password has been updated successfully.
                     </p>
                     <button
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate('/signin')}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
                     >
                         Return to Login
