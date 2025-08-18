@@ -30,7 +30,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
         setError('');
 
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+            const response = await axios.post('https://ssa-serverr.onrender.com/api/auth/forgot-password', { email });
             console.log(response.data); // optional: debug
             setIsSuccess(true);
         } catch (err: any) {

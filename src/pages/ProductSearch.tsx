@@ -59,7 +59,7 @@ const ProductSearch: React.FC = () => {
   const trackSearch = async (query: string, category: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/auth/search-history', {
+      await axios.post('https://ssa-serverr.onrender.com/api/auth/search-history', {
         query,
         category: category !== 'All Categories' ? category : undefined
       }, {
@@ -73,7 +73,7 @@ const ProductSearch: React.FC = () => {
   const trackProductView = async (product: Product) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/auth/product-view', {
+      await axios.post('https://ssa-serverr.onrender.com/api/auth/product-view', {
         productId: product.id,
         name: product.name,
         brand: product.brand,
@@ -168,7 +168,7 @@ const ProductSearch: React.FC = () => {
 
       if (isInWishlist) {
         // Remove from wishlist
-        await axios.delete(`http://localhost:5000/api/auth/wishlist/${product.id}`, {
+        await axios.delete(`https://ssa-serverr.onrender.com/api/auth/wishlist/${product.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const newWishlist = new Set(wishlist);
@@ -176,7 +176,7 @@ const ProductSearch: React.FC = () => {
         setWishlist(newWishlist);
       } else {
         // Add to wishlist
-        await axios.post('http://localhost:5000/api/auth/wishlist', {
+        await axios.post('https://ssa-serverr.onrender.com/api/auth/wishlist', {
           productId: product.id,
           name: product.name,
           brand: product.brand,
