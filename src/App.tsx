@@ -19,6 +19,7 @@ import Contact from './pages/Contact';
 import About from './pages/About';
 import AdminDashboard from './pages/AdminDashboard';
 import { AuthProvider } from './contexts/AuthContext';
+import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -62,6 +63,8 @@ function App() {
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/cookie-policy" element={<CookiePolicy />} />
                   <Route path="/gdpr-compliance" element={<GDPRCompliance />} />
+                  // Add this to your routes
+                  <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                 </Routes>
               </main>
               <Footer />

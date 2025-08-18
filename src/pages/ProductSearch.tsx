@@ -52,7 +52,7 @@ const ProductSearch: React.FC = () => {
   const fetchProducts = async () => {
     try {
       if (searchQuery.trim() !== '') {
-        const response = await axios.get(`https://dummymart1.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`);
+        const response = await axios.get(`https://martello.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`);
         const fetched = response.data?.products || response.data || [];
 
         // Optional: Normalize if API keys differ from your Product type
@@ -67,7 +67,8 @@ const ProductSearch: React.FC = () => {
           rating: p.rating || 0,
           reviewCount: p.reviewCount || 0,
           description: p.description || '',
-          image: p.imageUrl || p.image || 'https://via.placeholder.com/150',          tags: p.tags || [],
+          image: p.imageUrl || p.image || 'https://via.placeholder.com/150',
+          tags: p.tags || [],
           inStock: p.inStock ?? true
         }));
 

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 
 const SignIn: React.FC = () => {
@@ -13,13 +14,10 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // Get the intended destination from location state, default to dashboard
-  const from = location.state?.from?.pathname || '/dashboard';
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -46,7 +44,7 @@ const SignIn: React.FC = () => {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
-      navigate(from, { replace: true });
+      navigate('/dashboard');
     } catch (error) {
       setErrors({ general: 'Invalid email or password. Please try again.' });
     } finally {
@@ -60,7 +58,7 @@ const SignIn: React.FC = () => {
     onSuccess: async tokenResponse => {
       try {
         await handleGoogleLogin(tokenResponse.access_token);
-        navigate(from, { replace: true });
+        navigate('/dashboard');
       } catch (error) {
         console.error('Google login failed:', error);
       }
@@ -179,12 +177,13 @@ const SignIn: React.FC = () => {
 
             {/* Forgot Password */}
             <div className="text-right">
-              <Link
-                  to="/forgot-password"
+              <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
                   className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
               >
                 Forgot your password?
-              </Link>
+              </button>
             </div>
 
             {/* Submit Button */}
@@ -213,6 +212,12 @@ const SignIn: React.FC = () => {
               </p>
             </div>
           </form>
+
+          {/* Forgot Password Modal */}
+          <ForgotPasswordModal
+              isOpen={showForgotPassword}
+              onClose={() => setShowForgotPassword(false)}
+          />
         </div>
       </div>
   );
