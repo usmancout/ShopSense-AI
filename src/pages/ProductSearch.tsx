@@ -49,6 +49,45 @@ const ProductSearch: React.FC = () => {
     applyFilters(products);
   }, [products, selectedCategory, selectedStore, priceRange, minRating, sortBy]);
 
+  // Track search when query changes
+  useEffect(() => {
+    if (searchQuery.trim() && isAuthenticated) {
+      trackSearch(searchQuery, selectedCategory);
+    }
+  }, [searchQuery, selectedCategory, isAuthenticated]);
+
+  const trackSearch = async (query: string, category: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:5000/api/auth/search-history', {
+        query,
+        category: category !== 'All Categories' ? category : undefined
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error('Failed to track search:', error);
+    }
+  };
+
+  const trackProductView = async (product: Product) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:5000/api/auth/product-view', {
+        productId: product.id,
+        name: product.name,
+        brand: product.brand,
+        price: product.price,
+        image: product.image,
+        store: product.store
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error('Failed to track product view:', error);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       if (searchQuery.trim() !== '') {
@@ -122,14 +161,43 @@ const ProductSearch: React.FC = () => {
     setSearchParams(params);
   };
 
-  const toggleWishlist = (productId: string) => {
-    const newWishlist = new Set(wishlist);
-    if (newWishlist.has(productId)) {
-      newWishlist.delete(productId);
-    } else {
-      newWishlist.add(productId);
+  const toggleWishlist = async (product: Product) => {
+    try {
+      const token = localStorage.getItem('token');
+      const isInWishlist = wishlist.has(product.id);
+
+      if (isInWishlist) {
+        // Remove from wishlist
+        await axios.delete(`http://localhost:5000/api/auth/wishlist/${product.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const newWishlist = new Set(wishlist);
+        newWishlist.delete(product.id);
+        setWishlist(newWishlist);
+      } else {
+        // Add to wishlist
+        await axios.post('http://localhost:5000/api/auth/wishlist', {
+          productId: product.id,
+          name: product.name,
+          brand: product.brand,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          image: product.image,
+          store: product.store,
+          rating: product.rating,
+          reviewCount: product.reviewCount,
+          description: product.description
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const newWishlist = new Set(wishlist);
+        newWishlist.add(product.id);
+        setWishlist(newWishlist);
+      }
+    } catch (error) {
+      console.error('Failed to update wishlist:', error);
+      alert('Failed to update wishlist. Please try again.');
     }
-    setWishlist(newWishlist);
   };
 
   const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
@@ -145,7 +213,7 @@ const ProductSearch: React.FC = () => {
               }`}
           />
           <button
-              onClick={() => toggleWishlist(product.id)}
+              onClick={() => toggleWishlist(product)}
               className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-gray-900/80 rounded-full backdrop-blur-sm hover:bg-gray-900 transition-colors"
           >
             <Heart
@@ -206,6 +274,7 @@ const ProductSearch: React.FC = () => {
             </div>
             <button
                 disabled={!product.inStock}
+                onClick={() => trackProductView(product)}
                 className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
             >
               <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -420,7 +489,9 @@ const ProductSearch: React.FC = () => {
             <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">You Might Also Like</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {mockProducts.slice(0, 4).map(product => (
-                  <ProductCard key={`rec-${product.id}`} product={product} />
+                  <div key={`rec-${product.id}`} onClick={() => trackProductView(product)}>
+                    <ProductCard product={product} />
+                  </div>
               ))}
             </div>
           </section>
