@@ -8,8 +8,7 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   server: {
-    //open: true, // Opens the browser automatically
-    host: true, // Allows external access (e.g., network devices)
+    host: true,
   },
-  base: '/', // Ensures the app uses the root path (adjust if deployed under a subpath)
+  base: '/',
 });

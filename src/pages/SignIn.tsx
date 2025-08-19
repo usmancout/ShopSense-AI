@@ -87,12 +87,7 @@ const SignIn: React.FC = () => {
             </p>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="bg-blue-900/50 border border-blue-500 text-blue-200 px-4 py-3 rounded-lg text-sm">
-            <p className="font-medium mb-2">Demo Credentials:</p>
-            <p>Admin: admin@shopsenseai.com / password</p>
-            <p>User: user@example.com / password</p>
-          </div>
+
 
           {/* Social Sign In */}
           <div className="space-y-3">

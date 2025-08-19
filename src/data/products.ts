@@ -13,6 +13,8 @@ export interface Product {
   description: string;
   features: string[];
   tags: string[];
+  url: string;
+
 }
 
 export const mockProducts: Product[] = [
@@ -30,7 +32,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'The most advanced iPhone yet with titanium design and A17 Pro chip.',
     features: ['A17 Pro chip', 'Titanium build', '5x optical zoom', 'Action Button'],
-    tags: ['smartphone', 'apple', 'premium', 'camera']
+    tags: ['smartphone', 'apple', 'premium', 'camera'],
+    url:''
   },
   {
     id: '2',
@@ -45,7 +48,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'Supercharged by the M3 chip, ultra-thin and lightweight laptop.',
     features: ['M3 chip', '18-hour battery', 'Retina display', 'Touch ID'],
-    tags: ['laptop', 'apple', 'portable', 'productivity']
+    tags: ['laptop', 'apple', 'portable', 'productivity'],
+    url:''
   },
   {
     id: '3',
@@ -61,7 +65,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'Classic basketball shoe with timeless style and premium leather.',
     features: ['Premium leather', 'Air cushioning', 'Rubber outsole', 'Iconic design'],
-    tags: ['sneakers', 'basketball', 'retro', 'style']
+    tags: ['sneakers', 'basketball', 'retro', 'style'],
+    url:''
   },
   {
     id: '4',
@@ -77,7 +82,8 @@ export const mockProducts: Product[] = [
     inStock: false,
     description: 'Industry-leading noise canceling headphones with premium sound.',
     features: ['30hr battery', 'Quick charge', 'Multipoint connection', 'Touch controls'],
-    tags: ['headphones', 'wireless', 'noise-canceling', 'premium']
+    tags: ['headphones', 'wireless', 'noise-canceling', 'premium'],
+    url:''
   },
   {
     id: '5',
@@ -93,7 +99,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'Multi-use pressure cooker that replaces 7 kitchen appliances.',
     features: ['7-in-1 functionality', 'Stainless steel', 'Smart programs', 'Safety features'],
-    tags: ['kitchen', 'cooking', 'pressure-cooker', 'multi-use']
+    tags: ['kitchen', 'cooking', 'pressure-cooker', 'multi-use'],
+    url:''
   },
   {
     id: '6',
@@ -109,7 +116,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'Timeless lessons on wealth, greed, and happiness.',
     features: ['Paperback', '256 pages', 'Financial wisdom', 'Bestseller'],
-    tags: ['finance', 'psychology', 'investment', 'money']
+    tags: ['finance', 'psychology', 'investment', 'money'],
+    url:''
   },
   {
     id: '7',
@@ -124,7 +132,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'High-performance yoga mat with superior grip and cushioning.',
     features: ['6mm thickness', 'Non-slip surface', 'Eco-friendly', 'Lifetime guarantee'],
-    tags: ['yoga', 'fitness', 'exercise', 'wellness']
+    tags: ['yoga', 'fitness', 'exercise', 'wellness'],
+    url:''
   },
   {
     id: '8',
@@ -139,7 +148,8 @@ export const mockProducts: Product[] = [
     inStock: true,
     description: 'Full-coverage foundation with 50 shades for all skin tones.',
     features: ['50 shades', 'Long-wearing', 'Buildable coverage', 'Inclusive'],
-    tags: ['makeup', 'foundation', 'inclusive', 'coverage']
+    tags: ['makeup', 'foundation', 'inclusive', 'coverage'],
+    url:'',
   }
 ];
 

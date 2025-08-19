@@ -289,10 +289,7 @@ const SignUp: React.FC = () => {
               )}
             </button>
 
-            {/* Email Verification Note */}
-            <div className="bg-blue-900/50 border border-blue-500 text-blue-200 px-4 py-3 rounded-lg text-sm">
-              <p>After signing up, please check your email to verify your account.</p>
-            </div>
+
 
             {/* Sign In Link */}
             <div className="text-center">

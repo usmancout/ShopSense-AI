@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, Mail, Lock, Camera, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from "axios";
+import axios from 'axios';
 
 const Profile: React.FC = () => {
   const { user, updateProfile, getProfile } = useAuth();
@@ -33,9 +33,9 @@ const Profile: React.FC = () => {
     fetchProfile();
   }, [getProfile]);
 
-  // Sync profile form data when user state updates
+  // Initialize form data with user data only on first load
   useEffect(() => {
-    if (user) {
+    if (user && !profileFormData.name && !profileFormData.email) { // Only set initial values
       setProfileFormData({
         name: user.username || '',
         email: user.email || '',
@@ -91,12 +91,22 @@ const Profile: React.FC = () => {
           { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Update AuthContext user state
       updateProfile({
         username: response.data.user.username,
         email: response.data.user.email,
         phone: response.data.user.phone,
         location: response.data.user.location,
         bio: response.data.user.bio
+      });
+
+      // Sync form data with updated user state
+      setProfileFormData({
+        name: response.data.user.username || '',
+        email: response.data.user.email || '',
+        phone: response.data.user.phone || '',
+        location: response.data.user.location || '',
+        bio: response.data.user.bio || ''
       });
 
       alert('Profile updated successfully!');
@@ -176,7 +186,7 @@ const Profile: React.FC = () => {
           }
       );
 
-      // <-- Updated: re-fetch profile after uploading avatar
+      // Re-fetch profile after uploading avatar
       await getProfile();
       alert('Profile picture updated!');
     } catch (err) {

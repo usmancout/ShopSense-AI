@@ -7,7 +7,6 @@ import {
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  mockProducts,
   categories,
   stores,
   sortOptions,
@@ -17,8 +16,9 @@ import {
 const ProductSearch: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All Categories');
   const [selectedStore, setSelectedStore] = useState('All Stores');
@@ -29,6 +29,7 @@ const ProductSearch: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
   const [notification, setNotification] = useState<{type: string, message: string} | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Show a loading state while authentication is being checked
   if (!isAuthenticated) {
@@ -48,6 +49,7 @@ const ProductSearch: React.FC = () => {
 
   useEffect(() => {
     applyFilters(products);
+    fetchRecommendedProducts();
   }, [products, selectedCategory, selectedStore, priceRange, minRating, sortBy]);
 
   // Track search when query changes
@@ -91,7 +93,8 @@ const ProductSearch: React.FC = () => {
         brand: product.brand,
         price: product.price,
         image: product.image,
-        store: product.store
+        store: product.store,
+        url: product.url
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -102,34 +105,126 @@ const ProductSearch: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
+      setIsLoading(true);
+
       if (searchQuery.trim() !== '') {
-        const response = await axios.get(`https://martello.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`);
-        const fetched = response.data?.products || response.data || [];
+        // Fetch from all three APIs in parallel
+        const [martelloResponse, prodexaResponse, storentaResponse] = await Promise.allSettled([
+          axios.get(`https://martello.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`),
+          axios.get(`https://prodexa.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`),
+          axios.get(`https://storenta.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`)
+        ]);
 
-        // Optional: Normalize if API keys differ from your Product type
-        const normalized: Product[] = fetched.map((p: any) => ({
-          id: p.id?.toString() || Math.random().toString(),
-          name: p.name || p.title,
-          brand: p.brand || 'Akira',
-          category: p.category || 'Other',
-          store: p.store || 'Usman Store',
-          price: p.price || 0,
-          originalPrice: p.originalPrice || null,
-          rating: p.rating || 0,
-          reviewCount: p.reviewCount || 0,
-          description: p.description || '',
-          image: p.imageUrl || p.image || 'https://via.placeholder.com/150',
-          tags: p.tags || [],
-          inStock: p.inStock ?? true
-        }));
+        let fetchedProducts: Product[] = [];
 
-        setProducts(normalized);
+        // Process responses from each API
+        const processResponse = (response: any, storeName: string) => {
+          if (response?.data) {
+            const products = response.data.products || response.data || [];
+            return products.map((p: any) => ({
+              id: p.id?.toString() || Math.random().toString(),
+              name: p.name || p.title,
+              brand: p.brand || 'Unknown',
+              category: p.category || 'Other',
+              store: storeName,
+              price: p.price || 0,
+              originalPrice: p.originalPrice || null,
+              rating: p.rating || 0,
+              reviewCount: p.reviewCount || 0,
+              description: p.description || '',
+              image: p.imageUrl || p.image || 'https://via.placeholder.com/150',
+              url: p.link || p.url || '#', // Handle both link and url properties
+              tags: p.tags || [],
+              inStock: p.inStock ?? true
+            }));
+          }
+          return [];
+        };
+
+        if (martelloResponse.status === 'fulfilled') {
+          fetchedProducts = [...fetchedProducts, ...processResponse(martelloResponse.value, 'Martello')];
+        }
+
+        if (prodexaResponse.status === 'fulfilled') {
+          fetchedProducts = [...fetchedProducts, ...processResponse(prodexaResponse.value, 'Prodexa')];
+        }
+
+        if (storentaResponse.status === 'fulfilled') {
+          fetchedProducts = [...fetchedProducts, ...processResponse(storentaResponse.value, 'Storenta')];
+        }
+
+        setProducts(fetchedProducts);
       } else {
-        setProducts(mockProducts);
+        setProducts([]);
       }
     } catch (err) {
-      console.error('API fetch failed. Falling back to mockProducts.', err);
-      setProducts(mockProducts);
+      console.error('API fetch failed:', err);
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchRecommendedProducts = async () => {
+    try {
+      if (selectedCategory !== 'All Categories' && products.length > 0) {
+        // Fetch recommended products from the same category
+        const [martelloResponse, prodexaResponse, storentaResponse] = await Promise.allSettled([
+          axios.get(`https://martello.onrender.com/api/products?category=${encodeURIComponent(selectedCategory)}&limit=4`),
+          axios.get(`https://prodexa.onrender.com/api/products?category=${encodeURIComponent(selectedCategory)}&limit=4`),
+          axios.get(`https://storenta.onrender.com/api/products?category=${encodeURIComponent(selectedCategory)}&limit=4`)
+        ]);
+
+        let recommended: Product[] = [];
+
+        const processResponse = (response: any, storeName: string) => {
+          if (response?.data) {
+            const products = response.data.products || response.data || [];
+            return products.map((p: any) => ({
+              id: p.id?.toString() || Math.random().toString(),
+              name: p.name || p.title,
+              brand: p.brand || 'Unknown',
+              category: p.category || 'Other',
+              store: storeName,
+              price: p.price || 0,
+              originalPrice: p.originalPrice || null,
+              rating: p.rating || 0,
+              reviewCount: p.reviewCount || 0,
+              description: p.description || '',
+              image: p.imageUrl || p.image || 'https://via.placeholder.com/150',
+              url: p.link || p.url || '#', // Handle both link and url properties
+              tags: p.tags || [],
+              inStock: p.inStock ?? true
+            }));
+          }
+          return [];
+        };
+
+        if (martelloResponse.status === 'fulfilled') {
+          recommended = [...recommended, ...processResponse(martelloResponse.value, 'Martello')];
+        }
+
+        if (prodexaResponse.status === 'fulfilled') {
+          recommended = [...recommended, ...processResponse(prodexaResponse.value, 'Prodexa')];
+        }
+
+        if (storentaResponse.status === 'fulfilled') {
+          recommended = [...recommended, ...processResponse(storentaResponse.value, 'Storenta')];
+        }
+
+        // Remove duplicates and products already in search results
+        const productIds = new Set(products.map(p => p.id));
+        const uniqueRecommended = recommended
+            .filter(p => !productIds.has(p.id))
+            .slice(0, 8); // Limit to 8 recommendations
+
+        setRecommendedProducts(uniqueRecommended);
+      } else {
+        setRecommendedProducts([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recommended products:', err);
+      setRecommendedProducts([]);
     }
   };
 
@@ -156,6 +251,24 @@ const ProductSearch: React.FC = () => {
         filtered.sort((a, b) => b.reviewCount - a.reviewCount);
         break;
       default:
+        // Relevance sorting - prioritize products that match the search query
+        if (searchQuery.trim()) {
+          filtered.sort((a, b) => {
+            const aNameMatch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
+            const bNameMatch = b.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+            if (aNameMatch && !bNameMatch) return -1;
+            if (!aNameMatch && bNameMatch) return 1;
+
+            const aDescMatch = a.description.toLowerCase().includes(searchQuery.toLowerCase());
+            const bDescMatch = b.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+            if (aDescMatch && !bDescMatch) return -1;
+            if (!aDescMatch && bDescMatch) return 1;
+
+            return 0;
+          });
+        }
         break;
     }
 
@@ -202,7 +315,8 @@ const ProductSearch: React.FC = () => {
           store: product.store,
           rating: product.rating,
           reviewCount: product.reviewCount,
-          description: product.description
+          description: product.description,
+          url: product.url
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -304,14 +418,16 @@ const ProductSearch: React.FC = () => {
                   <span className="text-base sm:text-lg text-gray-400 line-through">${product.originalPrice}</span>
               )}
             </div>
-            <button
-                disabled={!product.inStock}
+            <a
+                href={product.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => trackProductView(product)}
-                className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
+                className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
             >
               <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>View Product</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -390,9 +506,9 @@ const ProductSearch: React.FC = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <span className="text-gray-400 text-sm">
-                {filteredProducts.length} results
-              </span>
+                <span className="text-gray-400 text-sm">
+                  {filteredProducts.length} results
+                </span>
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -408,6 +524,12 @@ const ProductSearch: React.FC = () => {
             </div>
           </div>
 
+          {isLoading && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+              </div>
+          )}
+
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Filters Sidebar */}
             <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-full lg:w-64 flex-shrink-0`}>
@@ -422,6 +544,7 @@ const ProductSearch: React.FC = () => {
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                   >
+                    <option value="All Categories">All Categories</option>
                     {categories.map(category => (
                         <option key={category} value={category}>{category}</option>
                     ))}
@@ -436,9 +559,10 @@ const ProductSearch: React.FC = () => {
                       onChange={(e) => setSelectedStore(e.target.value)}
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                   >
-                    {stores.map(store => (
-                        <option key={store} value={store}>{store}</option>
-                    ))}
+                    <option value="All Stores">All Stores</option>
+                    <option value="Martello">Martello</option>
+                    <option value="Prodexa">Prodexa</option>
+                    <option value="Storenta">Storenta</option>
                   </select>
                 </div>
 
@@ -499,17 +623,19 @@ const ProductSearch: React.FC = () => {
 
             {/* Products Grid */}
             <div className="flex-1">
-              <div className={`grid gap-4 sm:gap-6 ${
-                  viewMode === 'grid'
-                      ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
-                      : 'grid-cols-1'
-              }`}>
-                {filteredProducts.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              {!isLoading && filteredProducts.length > 0 && (
+                  <div className={`grid gap-4 sm:gap-6 ${
+                      viewMode === 'grid'
+                          ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
+                          : 'grid-cols-1'
+                  }`}>
+                    {filteredProducts.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+              )}
 
-              {filteredProducts.length === 0 && (
+              {!isLoading && filteredProducts.length === 0 && (
                   <div className="text-center py-12 sm:py-16">
                     <div className="bg-gray-800 rounded-xl p-6 sm:p-8 max-w-md mx-auto">
                       <SlidersHorizontal className="h-12 w-12 sm:h-16 sm:w-16 text-gray-600 mx-auto mb-4" />
@@ -536,16 +662,18 @@ const ProductSearch: React.FC = () => {
           </div>
 
           {/* Recommendation Section */}
-          <section className="mt-12 sm:mt-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">You Might Also Like</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {mockProducts.slice(0, 4).map(product => (
-                  <div key={`rec-${product.id}`} onClick={() => trackProductView(product)}>
-                    <ProductCard product={product} />
-                  </div>
-              ))}
-            </div>
-          </section>
+          {recommendedProducts.length > 0 && (
+              <section className="mt-12 sm:mt-16">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Related Products in {selectedCategory}</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {recommendedProducts.map(product => (
+                      <div key={`rec-${product.id}`}>
+                        <ProductCard product={product} />
+                      </div>
+                  ))}
+                </div>
+              </section>
+          )}
         </div>
       </div>
   );
