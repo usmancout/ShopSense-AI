@@ -133,7 +133,7 @@ const ProductSearch: React.FC = () => {
               reviewCount: p.reviewCount || 0,
               description: p.description || '',
               image: p.imageUrl || p.image || 'https://via.placeholder.com/150',
-              url: p.link || p.url || '#', // Handle both link and url properties
+              url: p.link || p.url || '#',
               tags: p.tags || [],
               inStock: p.inStock ?? true
             }));
@@ -192,7 +192,7 @@ const ProductSearch: React.FC = () => {
               reviewCount: p.reviewCount || 0,
               description: p.description || '',
               image: p.imageUrl || p.image || 'https://via.placeholder.com/150',
-              url: p.link || p.url || '#', // Handle both link and url properties
+              url: p.link || p.url || '#',
               tags: p.tags || [],
               inStock: p.inStock ?? true
             }));
@@ -228,13 +228,26 @@ const ProductSearch: React.FC = () => {
     }
   };
 
+  // Enhanced search matching function
+  const matchesSearchQuery = (product: Product, query: string) => {
+    if (!query.trim()) return true;
+
+    const searchTerms = query.toLowerCase().split(/\s+/);
+    const productText = `${product.name} ${product.brand} ${product.category} ${product.description} ${product.tags.join(' ')}`.toLowerCase();
+
+    // Check if all search terms are present in the product text
+    return searchTerms.every(term => productText.includes(term));
+  };
+
   const applyFilters = (productList: Product[]) => {
     let filtered = productList.filter(product => {
+      const matchesSearch = matchesSearchQuery(product, searchQuery);
       const matchesCategory = selectedCategory === 'All Categories' || product.category === selectedCategory;
       const matchesStore = selectedStore === 'All Stores' || product.store === selectedStore;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       const matchesRating = product.rating >= minRating;
-      return matchesCategory && matchesStore && matchesPrice && matchesRating;
+
+      return matchesSearch && matchesCategory && matchesStore && matchesPrice && matchesRating;
     });
 
     switch (sortBy) {
@@ -254,6 +267,7 @@ const ProductSearch: React.FC = () => {
         // Relevance sorting - prioritize products that match the search query
         if (searchQuery.trim()) {
           filtered.sort((a, b) => {
+            // Score products based on how well they match the search query
             const aNameMatch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
             const bNameMatch = b.name.toLowerCase().includes(searchQuery.toLowerCase());
 
