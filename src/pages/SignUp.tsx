@@ -4,8 +4,6 @@ import { Eye, EyeOff, User, Mail, Lock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 
-
-
 const SignUp: React.FC = () => {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -22,8 +20,8 @@ const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get the intended destination from location state, default to dashboard
-  const from = location.state?.from?.pathname || '/dashboard';
+  // Get the intended destination from location state, default to signin
+  const from = '/signin'; // Always redirect to signin after signup
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -59,12 +57,14 @@ const SignUp: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Call signup without automatically logging in
       await signup({
         username: formData.fullName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
 
+      // Redirect to sign-in page
       navigate(from, { replace: true });
     } catch (error) {
       setErrors({ general: 'Failed to create account. Please try again.' });
@@ -76,7 +76,7 @@ const SignUp: React.FC = () => {
   const { googleLogin: handleGoogleLogin } = useAuth();
 
   const googleLogin = useGoogleLogin({
-    onSuccess: async tokenResponse => {
+    onSuccess: async (tokenResponse) => {
       try {
         await handleGoogleLogin(tokenResponse.access_token);
         navigate(from, { replace: true });
@@ -84,16 +84,14 @@ const SignUp: React.FC = () => {
         console.error('Google login failed:', error);
       }
     },
-    onError: error => console.error('Google login error:', error),
+    onError: (error) => console.error('Google login error:', error),
   });
-
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
@@ -115,10 +113,13 @@ const SignUp: React.FC = () => {
                 onClick={() => googleLogin()}
                 className="w-full flex items-center justify-center space-x-3 bg-white text-gray-900 border border-gray-300 rounded-lg px-4 py-3 hover:bg-gray-50 transition-colors"
             >
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="h-5 w-5"/>
+              <img
+                  src="https://www.google.com/favicon.ico"
+                  alt="Google"
+                  className="h-5 w-5"
+              />
               <span>Continue with Google</span>
             </button>
-
           </div>
 
           <div className="relative">
@@ -126,7 +127,9 @@ const SignUp: React.FC = () => {
               <div className="w-full border-t border-gray-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
+            <span className="px-2 bg-gray-900 text-gray-400">
+              Or continue with email
+            </span>
             </div>
           </div>
 
@@ -140,7 +143,10 @@ const SignUp: React.FC = () => {
 
             {/* Full Name */}
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                  htmlFor="fullName"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Full Name
               </label>
               <div className="relative">
@@ -157,12 +163,17 @@ const SignUp: React.FC = () => {
                     placeholder="Enter your full name"
                 />
               </div>
-              {errors.fullName && <p className="mt-1 text-sm text-red-400">{errors.fullName}</p>}
+              {errors.fullName && (
+                  <p className="mt-1 text-sm text-red-400">{errors.fullName}</p>
+              )}
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -179,12 +190,17 @@ const SignUp: React.FC = () => {
                     placeholder="Enter your email"
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+              {errors.email && (
+                  <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+              )}
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -205,15 +221,24 @@ const SignUp: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                  ) : (
+                      <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+              {errors.password && (
+                  <p className="mt-1 text-sm text-red-400">{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Confirm Password
               </label>
               <div className="relative">
@@ -234,10 +259,18 @@ const SignUp: React.FC = () => {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                 >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                  ) : (
+                      <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-400">
+                    {errors.confirmPassword}
+                  </p>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -265,7 +298,10 @@ const SignUp: React.FC = () => {
             <div className="text-center">
               <p className="text-gray-400">
                 Already have an account?{' '}
-                <Link to="/signin" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+                <Link
+                    to="/signin"
+                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                >
                   Sign in here
                 </Link>
               </p>
@@ -275,6 +311,5 @@ const SignUp: React.FC = () => {
       </div>
   );
 };
-
 
 export default SignUp;

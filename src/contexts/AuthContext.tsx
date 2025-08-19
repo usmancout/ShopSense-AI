@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
 interface User {
@@ -36,25 +36,38 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Re-authenticate on mount if a token exists
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      getProfile(); // Fetch user profile to restore state
+    }
+  }, []);
+
   const login = async (email: string, password: string) => {
     const res = await axios.post('https://ssa-serverr.onrender.com/api/auth/login', { email, password });
-    const { token, user } = res.data;
+    const { token, user: loginUser } = res.data;
     localStorage.setItem('token', token);
-    setUser({ id: '1', ...user });
+    // Set initial user data from login
+    setUser({ id: '1', ...loginUser });
+    // Fetch full profile automatically after login
+    await getProfile();
   };
 
   const signup = async (data: { username: string; email: string; password: string }) => {
-    const res = await axios.post('https://ssa-serverr.onrender.com/api/auth/signup', data);
-    setUser({ id: '1', ...res.data.user });
+    await axios.post('https://ssa-serverr.onrender.com/api/auth/signup', data);
+    // No user state set here to avoid auto-login
   };
 
   const googleLogin = async (googleAccessToken: string) => {
     const res = await axios.post('https://ssa-serverr.onrender.com/api/auth/google-login', {
-      access_token: googleAccessToken
+      access_token: googleAccessToken,
     });
-    const { token, user } = res.data;
+    const { token, user: loginUser } = res.data;
     localStorage.setItem('token', token);
-    setUser({ id: '1', ...user });
+    setUser({ id: '1', ...loginUser });
+    // Fetch full profile automatically after Google login
+    await getProfile();
   };
 
   const logout = () => {
@@ -69,12 +82,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const getProfile = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setUser(null);
+        return;
+      }
       const res = await axios.get('https://ssa-serverr.onrender.com/api/auth/profile', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setUser({ id: '1', ...res.data.user }); // This updates all user data, including avatar
+      setUser({ id: '1', ...res.data.user });
     } catch (err) {
       console.error('Failed to fetch profile', err);
+      localStorage.removeItem('token'); // Clear token on failure
+      setUser(null);
     }
   };
 
@@ -92,7 +111,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-
   return (
       <AuthContext.Provider
           value={{
@@ -105,7 +123,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateProfile,
             getProfile,
             setUser,
-            changePassword
+            changePassword,
           }}
       >
         {children}

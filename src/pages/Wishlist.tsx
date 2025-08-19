@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Star, ExternalLink, Trash2, TrendingUp, Filter, Grid, List, ShoppingBag } from 'lucide-react';
+import { Heart, Star, ExternalLink, Trash2, Grid, List, ShoppingBag, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,11 +20,13 @@ interface WishlistItem {
 
 const Wishlist: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('dateAdded');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notification, setNotification] = useState<{type: string, message: string} | null>(null);
 
   const sortOptions = [
     { value: 'dateAdded', label: 'Recently Added' },
@@ -43,6 +46,17 @@ const Wishlist: React.FC = () => {
     sortWishlist();
   }, [sortBy]);
 
+  // Show notification for 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   const fetchWishlist = async () => {
     try {
       setIsLoading(true);
@@ -59,7 +73,7 @@ const Wishlist: React.FC = () => {
     }
   };
 
-  const removeFromWishlist = async (productId: string) => {
+  const removeFromWishlist = async (productId: string, productName: string) => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`https://ssa-serverr.onrender.com/api/auth/wishlist/${productId}`, {
@@ -68,9 +82,18 @@ const Wishlist: React.FC = () => {
 
       // Update local state
       setWishlistItems(prev => prev.filter(item => item.productId !== productId));
+
+      // Show success notification
+      setNotification({
+        type: 'success',
+        message: `"${productName}" removed from wishlist`
+      });
     } catch (err) {
       console.error('Failed to remove from wishlist:', err);
-      alert('Failed to remove item from wishlist');
+      setNotification({
+        type: 'error',
+        message: 'Failed to remove item from wishlist'
+      });
     }
   };
 
@@ -111,21 +134,21 @@ const Wishlist: React.FC = () => {
 
   const WishlistItemComponent: React.FC<{ product: WishlistItem }> = ({ product }) => (
       <div className={`bg-gray-800 rounded-xl overflow-hidden group hover:shadow-xl transition-all duration-300 ${
-          viewMode === 'list' ? 'flex' : ''
+          viewMode === 'list' ? 'flex flex-col md:flex-row' : ''
       }`}>
-        <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
+        <div className={`relative ${viewMode === 'list' ? 'w-full md:w-48 flex-shrink-0' : ''}`}>
           <img
               src={product.image}
               alt={product.name}
               className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-                  viewMode === 'list' ? 'h-full' : 'h-48'
+                  viewMode === 'list' ? 'h-48 md:h-full' : 'h-48'
               }`}
           />
           <button
-              onClick={() => removeFromWishlist(product.productId)}
+              onClick={() => removeFromWishlist(product.productId, product.name)}
               className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
           >
-            <Heart className="h-5 w-5 text-white fill-current" />
+            <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-white fill-current" />
           </button>
           {product.originalPrice && (
               <div className="absolute bottom-3 left-3 bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
@@ -134,15 +157,15 @@ const Wishlist: React.FC = () => {
           )}
         </div>
 
-        <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+        <div className={`p-4 sm:p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
           <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="font-semibold text-lg mb-1 group-hover:text-purple-400 transition-colors">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-purple-400 transition-colors truncate">
                 {product.name}
               </h3>
               <p className="text-gray-400 text-sm">{product.brand}</p>
             </div>
-            <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
+            <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium ml-2 flex-shrink-0">
             {product.store}
           </span>
           </div>
@@ -152,24 +175,24 @@ const Wishlist: React.FC = () => {
               {[...Array(5)].map((_, i) => (
                   <Star
                       key={i}
-                      className={`h-4 w-4 ${
+                      className={`h-3 w-3 sm:h-4 sm:w-4 ${
                           i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-600'
                       }`}
                   />
               ))}
             </div>
-            <span className="text-sm text-gray-400">
+            <span className="text-xs sm:text-sm text-gray-400">
             {product.rating} ({product.reviewCount.toLocaleString()})
           </span>
           </div>
 
           <p className="text-gray-300 text-sm mb-4 line-clamp-2">{product.description}</p>
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-white">${product.price}</span>
+              <span className="text-xl sm:text-2xl font-bold text-white">${product.price}</span>
               {product.originalPrice && (
-                  <span className="text-lg text-gray-400 line-through">${product.originalPrice}</span>
+                  <span className="text-base sm:text-lg text-gray-400 line-through">${product.originalPrice}</span>
               )}
             </div>
             <div className="text-xs text-gray-400">
@@ -178,15 +201,15 @@ const Wishlist: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3">
-            <button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2">
-              <ExternalLink className="h-4 w-4" />
+            <button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm">
+              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>View Product</span>
             </button>
             <button
-                onClick={() => removeFromWishlist(product.productId)}
+                onClick={() => removeFromWishlist(product.productId, product.name)}
                 className="p-2 bg-gray-700 hover:bg-red-600 text-gray-400 hover:text-white rounded-lg transition-colors"
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         </div>
@@ -236,48 +259,62 @@ const Wishlist: React.FC = () => {
 
   return (
       <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        {/* Notification */}
+        {notification && (
+            <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm ${
+                notification.type === 'success' ? 'bg-green-900/90 text-green-100' :
+                    'bg-red-900/90 text-red-100'
+            }`}>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{notification.message}</p>
+              </div>
+              <button
+                  onClick={() => setNotification(null)}
+                  className="p-1 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+        )}
+
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">My Wishlist</h1>
-            <p className="text-gray-400">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">My Wishlist</h1>
+            <p className="text-gray-400 text-sm sm:text-base">
               {wishlistItems.length} items saved • Total value: ${calculateTotalValue().toLocaleString()}
             </p>
           </div>
 
           {/* Controls */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-gray-800 rounded-lg p-1">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="flex items-center space-x-1 bg-gray-800 rounded-lg p-1">
                 <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded transition-colors ${
+                    className={`p-1.5 sm:p-2 rounded transition-colors ${
                         viewMode === 'grid' ? 'bg-purple-600' : 'hover:bg-gray-700'
                     }`}
                 >
-                  <Grid className="h-5 w-5" />
+                  <Grid className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
                 <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded transition-colors ${
+                    className={`p-1.5 sm:p-2 rounded transition-colors ${
                         viewMode === 'list' ? 'bg-purple-600' : 'hover:bg-gray-700'
                     }`}
                 >
-                  <List className="h-5 w-5" />
+                  <List className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
-              <button className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-                <Filter className="h-5 w-5" />
-                <span>Filter</span>
-              </button>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <span className="text-gray-400 text-sm">Sort by:</span>
               <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               >
                 {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -290,9 +327,9 @@ const Wishlist: React.FC = () => {
 
           {/* Wishlist Items */}
           {wishlistItems.length > 0 ? (
-              <div className={`grid gap-6 ${
+              <div className={`grid gap-4 sm:gap-6 ${
                   viewMode === 'grid'
-                      ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                      ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
                       : 'grid-cols-1'
               }`}>
                 {wishlistItems.map(product => (
@@ -300,54 +337,18 @@ const Wishlist: React.FC = () => {
                 ))}
               </div>
           ) : (
-              <div className="text-center py-16">
-                <div className="bg-gray-800 rounded-xl p-8 max-w-md mx-auto">
-                  <Heart className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Your wishlist is empty</h3>
-                  <p className="text-gray-400 mb-6">
+              <div className="text-center py-12 sm:py-16">
+                <div className="bg-gray-800 rounded-xl p-6 sm:p-8 max-w-md mx-auto">
+                  <Heart className="h-12 w-12 sm:h-16 sm:w-16 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold mb-2">Your wishlist is empty</h3>
+                  <p className="text-gray-400 mb-6 text-sm sm:text-base">
                     Start adding products you love to keep track of them and get price alerts.
                   </p>
-                  <a
-                      href="/search"
-                      className="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg transition-colors"
+                  <button
+                      onClick={() => navigate('/search')}
+                      className="inline-block bg-purple-600 hover:bg-purple-700 px-4 sm:px-6 py-2 rounded-lg transition-colors text-sm sm:text-base"
                   >
                     Browse Products
-                  </a>
-                </div>
-              </div>
-          )}
-
-          {/* Price Tracking Info */}
-          {wishlistItems.length > 0 && (
-              <div className="mt-12 bg-gradient-to-r from-blue-900 to-purple-900 rounded-xl p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-500 p-3 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">Price Tracking Enabled</h3>
-                    <p className="text-gray-300">
-                      We'll notify you when prices drop on your wishlist items.
-                      You've saved an average of 15% on tracked items this month!
-                    </p>
-                  </div>
-                </div>
-              </div>
-          )}
-
-          {/* Sharing */}
-          {wishlistItems.length > 0 && (
-              <div className="mt-8 text-center">
-                <h3 className="text-lg font-semibold mb-4">Share Your Wishlist</h3>
-                <div className="flex items-center justify-center space-x-4">
-                  <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
-                    Share on Facebook
-                  </button>
-                  <button className="bg-blue-400 hover:bg-blue-500 px-4 py-2 rounded-lg transition-colors">
-                    Share on Twitter
-                  </button>
-                  <button className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">
-                    Copy Link
                   </button>
                 </div>
               </div>

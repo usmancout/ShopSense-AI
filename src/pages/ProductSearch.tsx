@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search, Filter, SlidersHorizontal, Star,
-  ExternalLink, Heart, Grid, List
+  ExternalLink, Heart, Grid, List, X
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,6 +28,7 @@ const ProductSearch: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
+  const [notification, setNotification] = useState<{type: string, message: string} | null>(null);
 
   // Show a loading state while authentication is being checked
   if (!isAuthenticated) {
@@ -55,6 +56,17 @@ const ProductSearch: React.FC = () => {
       trackSearch(searchQuery, selectedCategory);
     }
   }, [searchQuery, selectedCategory, isAuthenticated]);
+
+  // Show notification for 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const trackSearch = async (query: string, category: string) => {
     try {
@@ -174,6 +186,10 @@ const ProductSearch: React.FC = () => {
         const newWishlist = new Set(wishlist);
         newWishlist.delete(product.id);
         setWishlist(newWishlist);
+        setNotification({
+          type: 'success',
+          message: 'Product removed from your wishlist'
+        });
       } else {
         // Add to wishlist
         await axios.post('https://ssa-serverr.onrender.com/api/auth/wishlist', {
@@ -193,10 +209,26 @@ const ProductSearch: React.FC = () => {
         const newWishlist = new Set(wishlist);
         newWishlist.add(product.id);
         setWishlist(newWishlist);
+        setNotification({
+          type: 'success',
+          message: 'Product added to your wishlist!'
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update wishlist:', error);
-      alert('Failed to update wishlist. Please try again.');
+
+      // Check if it's a duplicate error
+      if (error.response?.status === 409) {
+        setNotification({
+          type: 'info',
+          message: 'This product is already in your wishlist!'
+        });
+      } else {
+        setNotification({
+          type: 'info',
+          message: 'This product is already in your wishlist!'
+        });
+      }
     }
   };
 
@@ -287,6 +319,25 @@ const ProductSearch: React.FC = () => {
 
   return (
       <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+        {/* Notification */}
+        {notification && (
+            <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm ${
+                notification.type === 'success' ? 'bg-green-900/90 text-green-100' :
+                    notification.type === 'error' ? 'bg-red-900/90 text-red-100' :
+                        'bg-blue-900/90 text-blue-100'
+            }`}>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{notification.message}</p>
+              </div>
+              <button
+                  onClick={() => setNotification(null)}
+                  className="p-1 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+        )}
+
         <div className="max-w-7xl mx-auto">
           {/* Search Header */}
           <div className="mb-6 sm:mb-8">

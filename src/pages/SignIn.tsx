@@ -44,7 +44,7 @@ const SignIn: React.FC = () => {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
-      navigate('/dashboard');
+      navigate('/search');
     } catch (error) {
       setErrors({ general: 'Invalid email or password. Please try again.' });
     } finally {
@@ -58,7 +58,7 @@ const SignIn: React.FC = () => {
     onSuccess: async tokenResponse => {
       try {
         await handleGoogleLogin(tokenResponse.access_token);
-        navigate('/dashboard');
+        navigate('/search');
       } catch (error) {
         console.error('Google login failed:', error);
       }
