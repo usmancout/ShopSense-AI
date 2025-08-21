@@ -174,7 +174,6 @@ export const stores = [
   'FitGear',
   'BeautyWorld'
 ];
-
 export const sortOptions = [
   { value: 'relevance', label: 'Relevance' },
   { value: 'price-low', label: 'Price: Low to High' },
