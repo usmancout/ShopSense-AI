@@ -80,7 +80,7 @@ const Profile: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-          'https://ssa-serverr.onrender.com/api/auth/profile',
+          `${import.meta.env.VITE_API_URL}/api/auth/profile`,
           {
             username: profileFormData.name,
             email: profileFormData.email,
@@ -126,7 +126,7 @@ const Profile: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-          'https://ssa-serverr.onrender.com/api/auth/password',
+          `${import.meta.env.VITE_API_URL}/api/auth/password`,
           {
             currentPassword: passwordFormData.currentPassword,
             newPassword: passwordFormData.newPassword
@@ -176,7 +176,7 @@ const Profile: React.FC = () => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       await axios.put(
-          'https://ssa-serverr.onrender.com/api/auth/avatar',
+          `${import.meta.env.VITE_API_URL}/api/auth/avatar`,
           formData,
           {
             headers: {

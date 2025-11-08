@@ -2,16 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search, Filter, SlidersHorizontal, Star,
-  ExternalLink, Heart, Grid, List, X
+  ExternalLink, Heart, Grid, List, X, MapPin
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import {
   categories,
-  stores,
   sortOptions,
   Product
 } from '../data/products';
+
+// Mock mart locations data (you can replace with actual API data)
+const martLocations = [
+  { id: 'mart1', name: 'Martello Downtown', address: '123 Main St, City', lat: 31.458677908180455, lng: 74.28865302384219 },
+  { id: 'mart2', name: 'Martello West', address: '456 West Ave, City', lat: 31.45133397893662, lng: 74.29248982384179 },
+  { id: 'mart3', name: 'Prodexa Central', address: '789 Central Rd, City', lat: 40.7328, lng: -74.0260 },
+  { id: 'mart4', name: 'Storenta Plaza', address: '321 Plaza Dr, City', lat: 40.7428, lng: -74.0360 },
+];
 
 const ProductSearch: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -22,6 +29,10 @@ const ProductSearch: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All Categories');
   const [selectedStore, setSelectedStore] = useState('All Stores');
+  const [selectedMart, setSelectedMart] = useState('Select Mart');
+  const [showMap, setShowMap] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<typeof martLocations[0] | null>(null);
+  const [pinnedLocations, setPinnedLocations] = useState<Set<string>>(new Set());
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('relevance');
@@ -31,7 +42,6 @@ const ProductSearch: React.FC = () => {
   const [notification, setNotification] = useState<{type: string, message: string} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Show a loading state while authentication is being checked
   if (!isAuthenticated) {
     return (
         <div className="min-h-screen flex items-center justify-center">
@@ -52,20 +62,17 @@ const ProductSearch: React.FC = () => {
     fetchRecommendedProducts();
   }, [products, selectedCategory, selectedStore, priceRange, minRating, sortBy]);
 
-  // Track search when query changes
   useEffect(() => {
     if (searchQuery.trim() && isAuthenticated) {
       trackSearch(searchQuery, selectedCategory);
     }
   }, [searchQuery, selectedCategory, isAuthenticated]);
 
-  // Show notification for 3 seconds
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => {
         setNotification(null);
       }, 3000);
-
       return () => clearTimeout(timer);
     }
   }, [notification]);
@@ -73,7 +80,7 @@ const ProductSearch: React.FC = () => {
   const trackSearch = async (query: string, category: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('https://ssa-serverr.onrender.com/api/auth/search-history', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/search-history`, {
         query,
         category: category !== 'All Categories' ? category : undefined
       }, {
@@ -87,7 +94,7 @@ const ProductSearch: React.FC = () => {
   const trackProductView = async (product: Product) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('https://ssa-serverr.onrender.com/api/auth/product-view', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/product-view`, {
         productId: product.id,
         name: product.name,
         brand: product.brand,
@@ -106,9 +113,7 @@ const ProductSearch: React.FC = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-
       if (searchQuery.trim() !== '') {
-        // Fetch from all three APIs in parallel
         const [martelloResponse, prodexaResponse, storentaResponse] = await Promise.allSettled([
           axios.get(`https://martello.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`),
           axios.get(`https://prodexa.onrender.com/api/products?q=${encodeURIComponent(searchQuery)}`),
@@ -117,7 +122,6 @@ const ProductSearch: React.FC = () => {
 
         let fetchedProducts: Product[] = [];
 
-        // Process responses from each API
         const processResponse = (response: any, storeName: string) => {
           if (response?.data) {
             const products = response.data.products || response.data || [];
@@ -144,11 +148,9 @@ const ProductSearch: React.FC = () => {
         if (martelloResponse.status === 'fulfilled') {
           fetchedProducts = [...fetchedProducts, ...processResponse(martelloResponse.value, 'Martello')];
         }
-
         if (prodexaResponse.status === 'fulfilled') {
           fetchedProducts = [...fetchedProducts, ...processResponse(prodexaResponse.value, 'Prodexa')];
         }
-
         if (storentaResponse.status === 'fulfilled') {
           fetchedProducts = [...fetchedProducts, ...processResponse(storentaResponse.value, 'Storenta')];
         }
@@ -168,7 +170,6 @@ const ProductSearch: React.FC = () => {
   const fetchRecommendedProducts = async () => {
     try {
       if (selectedCategory !== 'All Categories' && products.length > 0) {
-        // Fetch recommended products from the same category
         const [martelloResponse, prodexaResponse, storentaResponse] = await Promise.allSettled([
           axios.get(`https://martello.onrender.com/api/products?category=${encodeURIComponent(selectedCategory)}&limit=4`),
           axios.get(`https://prodexa.onrender.com/api/products?category=${encodeURIComponent(selectedCategory)}&limit=4`),
@@ -203,21 +204,17 @@ const ProductSearch: React.FC = () => {
         if (martelloResponse.status === 'fulfilled') {
           recommended = [...recommended, ...processResponse(martelloResponse.value, 'Martello')];
         }
-
         if (prodexaResponse.status === 'fulfilled') {
           recommended = [...recommended, ...processResponse(prodexaResponse.value, 'Prodexa')];
         }
-
         if (storentaResponse.status === 'fulfilled') {
           recommended = [...recommended, ...processResponse(storentaResponse.value, 'Storenta')];
         }
 
-        // Remove duplicates and products already in search results
         const productIds = new Set(products.map(p => p.id));
         const uniqueRecommended = recommended
             .filter(p => !productIds.has(p.id))
-            .slice(0, 8); // Limit to 8 recommendations
-
+            .slice(0, 8);
         setRecommendedProducts(uniqueRecommended);
       } else {
         setRecommendedProducts([]);
@@ -228,14 +225,10 @@ const ProductSearch: React.FC = () => {
     }
   };
 
-  // Enhanced search matching function
   const matchesSearchQuery = (product: Product, query: string) => {
     if (!query.trim()) return true;
-
     const searchTerms = query.toLowerCase().split(/\s+/);
     const productText = `${product.name} ${product.brand} ${product.category} ${product.description} ${product.tags.join(' ')}`.toLowerCase();
-
-    // Check if all search terms are present in the product text
     return searchTerms.every(term => productText.includes(term));
   };
 
@@ -246,7 +239,6 @@ const ProductSearch: React.FC = () => {
       const matchesStore = selectedStore === 'All Stores' || product.store === selectedStore;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       const matchesRating = product.rating >= minRating;
-
       return matchesSearch && matchesCategory && matchesStore && matchesPrice && matchesRating;
     });
 
@@ -264,28 +256,21 @@ const ProductSearch: React.FC = () => {
         filtered.sort((a, b) => b.reviewCount - a.reviewCount);
         break;
       default:
-        // Relevance sorting - prioritize products that match the search query
         if (searchQuery.trim()) {
           filtered.sort((a, b) => {
-            // Score products based on how well they match the search query
             const aNameMatch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
             const bNameMatch = b.name.toLowerCase().includes(searchQuery.toLowerCase());
-
             if (aNameMatch && !bNameMatch) return -1;
             if (!aNameMatch && bNameMatch) return 1;
-
             const aDescMatch = a.description.toLowerCase().includes(searchQuery.toLowerCase());
             const bDescMatch = b.description.toLowerCase().includes(searchQuery.toLowerCase());
-
             if (aDescMatch && !bDescMatch) return -1;
             if (!aDescMatch && bDescMatch) return 1;
-
             return 0;
           });
         }
         break;
     }
-
     setFilteredProducts(filtered);
   };
 
@@ -304,10 +289,8 @@ const ProductSearch: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       const isInWishlist = wishlist.has(product.id);
-
       if (isInWishlist) {
-        // Remove from wishlist
-        await axios.delete(`https://ssa-serverr.onrender.com/api/auth/wishlist/${product.id}`, {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/wishlist/${product.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const newWishlist = new Set(wishlist);
@@ -318,8 +301,7 @@ const ProductSearch: React.FC = () => {
           message: 'Product removed from your wishlist'
         });
       } else {
-        // Add to wishlist
-        await axios.post('https://ssa-serverr.onrender.com/api/auth/wishlist', {
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/wishlist`, {
           productId: product.id,
           name: product.name,
           brand: product.brand,
@@ -344,8 +326,6 @@ const ProductSearch: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Failed to update wishlist:', error);
-
-      // Check if it's a duplicate error
       if (error.response?.status === 409) {
         setNotification({
           type: 'info',
@@ -358,6 +338,30 @@ const ProductSearch: React.FC = () => {
         });
       }
     }
+  };
+
+  const handleMartSelect = (martId: string) => {
+    const mart = martLocations.find(m => m.id === martId);
+    setSelectedMart(martId);
+    setSelectedLocation(mart || null);
+    setShowMap(!!mart);
+  };
+
+  const togglePinLocation = (martId: string) => {
+    const newPinned = new Set(pinnedLocations);
+    if (newPinned.has(martId)) {
+      newPinned.delete(martId);
+      setNotification({ type: 'success', message: 'Location unpinned' });
+    } else {
+      newPinned.add(martId);
+      setNotification({ type: 'success', message: 'Location pinned' });
+    }
+    setPinnedLocations(newPinned);
+  };
+
+  const goToLocation = (lat: number, lng: number) => {
+    // Open Google Maps in a new tab
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
   };
 
   const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
@@ -393,7 +397,6 @@ const ProductSearch: React.FC = () => {
               </div>
           )}
         </div>
-
         <div className={`p-4 sm:p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0">
@@ -406,7 +409,6 @@ const ProductSearch: React.FC = () => {
             {product.store}
           </span>
           </div>
-
           <div className="flex items-center space-x-2 mb-3">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -422,9 +424,7 @@ const ProductSearch: React.FC = () => {
             {product.rating} ({product.reviewCount.toLocaleString()})
           </span>
           </div>
-
           <p className="text-gray-300 text-sm mb-4 line-clamp-2">{product.description}</p>
-
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
               <span className="text-xl sm:text-2xl font-bold text-white">${product.price}</span>
@@ -449,7 +449,6 @@ const ProductSearch: React.FC = () => {
 
   return (
       <div className="min-h-screen py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
-        {/* Notification */}
         {notification && (
             <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm ${
                 notification.type === 'success' ? 'bg-green-900/90 text-green-100' :
@@ -467,9 +466,7 @@ const ProductSearch: React.FC = () => {
               </button>
             </div>
         )}
-
         <div className="max-w-7xl mx-auto">
-          {/* Search Header */}
           <div className="mb-6 sm:mb-8">
             <form onSubmit={handleSearch} className="mb-4 sm:mb-6">
               <div className="relative max-w-2xl">
@@ -489,7 +486,6 @@ const ProductSearch: React.FC = () => {
                 </button>
               </div>
             </form>
-
             <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <button
@@ -518,11 +514,10 @@ const ProductSearch: React.FC = () => {
                   </button>
                 </div>
               </div>
-
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                <span className="text-gray-400 text-sm">
-                  {filteredProducts.length} results
-                </span>
+              <span className="text-gray-400 text-sm">
+                {filteredProducts.length} results
+              </span>
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -534,23 +529,28 @@ const ProductSearch: React.FC = () => {
                       </option>
                   ))}
                 </select>
+                <select
+                    value={selectedMart}
+                    onChange={(e) => handleMartSelect(e.target.value)}
+                    className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                >
+                  <option value="Select Mart">Select Mart</option>
+                  {martLocations.map(mart => (
+                      <option key={mart.id} value={mart.id}>{mart.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
-
           {isLoading && (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
               </div>
           )}
-
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            {/* Filters Sidebar */}
             <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-full lg:w-64 flex-shrink-0`}>
               <div className="bg-gray-800 rounded-xl p-4 sm:p-6 space-y-4 sm:space-y-6">
                 <h3 className="text-base sm:text-lg font-semibold mb-4">Filters</h3>
-
-                {/* Category Filter */}
                 <div>
                   <h4 className="font-medium mb-3 text-sm sm:text-base">Category</h4>
                   <select
@@ -564,8 +564,6 @@ const ProductSearch: React.FC = () => {
                     ))}
                   </select>
                 </div>
-
-                {/* Store Filter */}
                 <div>
                   <h4 className="font-medium mb-3 text-sm sm:text-base">Store</h4>
                   <select
@@ -579,8 +577,6 @@ const ProductSearch: React.FC = () => {
                     <option value="Storenta">Storenta</option>
                   </select>
                 </div>
-
-                {/* Price Range */}
                 <div>
                   <h4 className="font-medium mb-3 text-sm sm:text-base">Price Range</h4>
                   <div className="space-y-3">
@@ -600,8 +596,6 @@ const ProductSearch: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Rating Filter */}
                 <div>
                   <h4 className="font-medium mb-3 text-sm sm:text-base">Minimum Rating</h4>
                   <div className="space-y-2">
@@ -634,9 +628,41 @@ const ProductSearch: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Products Grid */}
             <div className="flex-1">
+              {showMap && selectedLocation && (
+                  <div className="bg-gray-800 rounded-xl p-4 sm:p-6 mb-6">
+                    <h3 className="text-lg font-semibold mb-4">{selectedLocation.name}</h3>
+                    <p className="text-gray-300 text-sm mb-4">{selectedLocation.address}</p>
+                    <div className="relative h-64 rounded-lg overflow-hidden">
+                      <iframe
+                          src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyCZ2C4O59Y8mqf87RI27CYOnYHIZJhMuqg&q=${selectedLocation.lat},${selectedLocation.lng}`}
+                          className="w-full h-full"
+                          allowFullScreen
+                          loading="lazy"
+                      ></iframe>
+                    </div>
+                    <div className="flex space-x-4 mt-4">
+                      <button
+                          onClick={() => togglePinLocation(selectedLocation.id)}
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm ${
+                              pinnedLocations.has(selectedLocation.id)
+                                  ? 'bg-red-600 hover:bg-red-700'
+                                  : 'bg-purple-600 hover:bg-purple-700'
+                          } text-white transition-colors`}
+                      >
+                        <MapPin className="h-4 w-4" />
+                        <span>{pinnedLocations.has(selectedLocation.id) ? 'Unpin Location' : 'Pin Location'}</span>
+                      </button>
+                      <button
+                          onClick={() => goToLocation(selectedLocation.lat, selectedLocation.lng)}
+                          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm text-white transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        <span>Go to Location</span>
+                      </button>
+                    </div>
+                  </div>
+              )}
               {!isLoading && filteredProducts.length > 0 && (
                   <div className={`grid gap-4 sm:gap-6 ${
                       viewMode === 'grid'
@@ -648,7 +674,6 @@ const ProductSearch: React.FC = () => {
                     ))}
                   </div>
               )}
-
               {!isLoading && filteredProducts.length === 0 && (
                   <div className="text-center py-12 sm:py-16">
                     <div className="bg-gray-800 rounded-xl p-6 sm:p-8 max-w-md mx-auto">
@@ -674,8 +699,6 @@ const ProductSearch: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Recommendation Section */}
           {recommendedProducts.length > 0 && (
               <section className="mt-12 sm:mt-16">
                 <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Related Products in {selectedCategory}</h2>

@@ -58,7 +58,7 @@ const Dashboard: React.FC = () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://ssa-serverr.onrender.com/api/auth/dashboard', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDashboardData(response.data.dashboardData);

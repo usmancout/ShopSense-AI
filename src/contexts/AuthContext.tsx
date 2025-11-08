@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await axios.post('https://ssa-serverr.onrender.com/api/auth/login', { email, password });
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
     const { token, user: loginUser } = res.data;
     localStorage.setItem('token', token);
     // Set initial user data from login
@@ -55,12 +55,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signup = async (data: { username: string; email: string; password: string }) => {
-    await axios.post('https://ssa-serverr.onrender.com/api/auth/signup', data);
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, data);
     // No user state set here to avoid auto-login
   };
 
   const googleLogin = async (googleAccessToken: string) => {
-    const res = await axios.post('https://ssa-serverr.onrender.com/api/auth/google-login', {
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/google-login`, {
       access_token: googleAccessToken,
     });
     const { token, user: loginUser } = res.data;
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(null);
         return;
       }
-      const res = await axios.get('https://ssa-serverr.onrender.com/api/auth/profile', {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser({ id: '1', ...res.data.user });
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-          'https://ssa-serverr.onrender.com/api/auth/password',
+          `${import.meta.env.VITE_API_URL}/api/auth/password`,
           { currentPassword, newPassword },
           { headers: { Authorization: `Bearer ${token}` } }
       );

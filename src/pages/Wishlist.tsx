@@ -61,7 +61,7 @@ const Wishlist: React.FC = () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://ssa-serverr.onrender.com/api/auth/wishlist', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/wishlist`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWishlistItems(response.data.wishlist || []);
@@ -76,7 +76,7 @@ const Wishlist: React.FC = () => {
   const removeFromWishlist = async (productId: string, productName: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`https://ssa-serverr.onrender.com/api/auth/wishlist/${productId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/wishlist/${productId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
