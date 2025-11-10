@@ -1,25 +1,27 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
-import LandingPage from './pages/LandingPage';
-import SignUp from './pages/SignUp';
-import SignIn from './pages/SignIn';
-import ProductSearch from './pages/ProductSearch';
-import Dashboard from './pages/Dashboard';
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import CookiePolicy from "./pages/CookiePolicy";
-import GDPRCompliance from "./pages/GDPRCompliance";
-import Profile from './pages/Profile';
-import Wishlist from './pages/Wishlist';
-import Contact from './pages/Contact';
-import About from './pages/About';
-import AdminDashboard from './pages/AdminDashboard';
+import { Spinner } from './components/ui';
 import { AuthProvider } from './contexts/AuthContext';
-import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
+
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const SignUp = lazy(() => import('./pages/SignUp'));
+const SignIn = lazy(() => import('./pages/SignIn'));
+const ProductSearch = lazy(() => import('./pages/ProductSearch'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
+const GDPRCompliance = lazy(() => import('./pages/GDPRCompliance'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Contact = lazy(() => import('./pages/Contact'));
+const About = lazy(() => import('./pages/About'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -44,28 +46,33 @@ function App() {
               <Header />
               <main className="flex-1 overflow-hidden">
                 <ScrollToTop />
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/search" element={
-                    <ProtectedRoute>
-                      <ProductSearch />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route path="/terms-of-service" element={<TermsOfService />} />
-                  <Route path="/cookie-policy" element={<CookiePolicy />} />
-                  <Route path="/gdpr-compliance" element={<GDPRCompliance />} />
-                  // Add this to your routes
-                  <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-                </Routes>
+                <Suspense fallback={
+                  <div className="min-h-screen flex items-center justify-center">
+                    <Spinner />
+                  </div>
+                }>
+                  <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/search" element={
+                      <ProtectedRoute>
+                        <ProductSearch />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/cookie-policy" element={<CookiePolicy />} />
+                    <Route path="/gdpr-compliance" element={<GDPRCompliance />} />
+                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                  </Routes>
+                </Suspense>
               </main>
               <Footer />
             </div>
