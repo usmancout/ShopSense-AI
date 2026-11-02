@@ -1,15 +1,15 @@
-# 🛍️ ShopSense AI — Smart Multi-Mart Price, Distance & Review Comparison Platform
+# ShopSense AI — Smart Multi-Mart Price, Distance & Review Comparison Platform
 
 **ShopSense AI** is a full-stack intelligent shopping comparison platform built with the **MERN Stack (MongoDB, Express.js, React + TypeScript, Node.js)** and **Hugging Face BERT (`@xenova/transformers`)**.
 
 It empowers shoppers to search any product across local marts (**Martello Downtown**, **Martello West**, **Prodexa Central**, and **Storenta Plaza**) and compare:
-1. **Real-Time Mart Prices** (with original prices & discounts)
+1. **Real-Time Mart Prices** (with original prices and discounts)
 2. **Live Distance (`km`) & Drive Time (`mins`)** from the customer's location using the Haversine formula
 3. **Customer Reviews Classified as `Genuine Review` or `Fake Review`** by a local **66M-parameter Hugging Face DistilBERT Transformer model** (`Xenova/distilbert-base-uncased-finetuned-sst-2-english`)
 
 ---
 
-## 📸 Project Screenshots
+## Project Screenshots
 
 ### 1. Landing Page — Light Mode & Dark Mode (Slate & Emerald Theme)
 ShopSense AI features a unified **Slate & Emerald** design system (`Plus Jakarta Sans` typography) with instant **Light Mode / Dark Mode** switching persisted in `localStorage`.
@@ -42,33 +42,33 @@ When a customer searches for a specific product (e.g., `iPhone 16 Pro Max`) or c
 
 ---
 
-## 🧠 How the Project Works (End-to-End Architecture)
+## How the Project Works (End-to-End Architecture)
 
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (React + TypeScript + Vite)                │
-│  • Landing Page, Product Search, Dashboard, Wishlist, Auth, Light/Dark UI  │
-│  • Calculates live GPS/Haversine distance (km) from user to each mart      │
-│  • Shows normal cards on browse; shows available marts on product search   │
-└───────────────────────────────────────┬────────────────────────────────────┘
-                                        │ REST API (Axios)
-                                        ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                     BACKEND (Node.js + Express + MongoDB)                  │
-│  • GET  /api/products                  → Search & filter 50 products       │
-│  • GET  /api/marts                     → 4 Marts with GPS coordinates      │
-│  • GET  /api/stores/:storeName/products→ Dedicated Mart APIs               │
-│  • POST /api/reviews/analyze           → Live BERT Review Classifier API   │
-└───────────────────────────────────────┬────────────────────────────────────┘
-                                        │ ONNX Runtime (Local Inference)
-                                        ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│        HUGGING FACE BERT ENGINE (@xenova/transformers — DistilBERT)        │
-│  • Model: Xenova/distilbert-base-uncased-finetuned-sst-2-english           │
-│  • Tokenizes customer reviews with WordPiece & runs 6-layer Transformer    │
-│  • Combines BERT sentiment probability + rating-sentiment consistency      │
-│    + promotional spam detection to label reviews GENUINE or FAKE           │
-└────────────────────────────────────────────────────────────────────────────┘
++----------------------------------------------------------------------------+
+|                        FRONTEND (React + TypeScript + Vite)                |
+|  - Landing Page, Product Search, Dashboard, Wishlist, Auth, Light/Dark UI  |
+|  - Calculates live GPS/Haversine distance (km) from user to each mart      |
+|  - Shows normal cards on browse; shows available marts on product search   |
++---------------------------------------+------------------------------------+
+                                        | REST API (Axios)
+                                        v
++----------------------------------------------------------------------------+
+|                     BACKEND (Node.js + Express + MongoDB)                  |
+|  - GET  /api/products                  -> Search & filter 50 products      |
+|  - GET  /api/marts                     -> 4 Marts with GPS coordinates     |
+|  - GET  /api/stores/:storeName/products-> Dedicated Mart APIs              |
+|  - POST /api/reviews/analyze           -> Live BERT Review Classifier API  |
++---------------------------------------+------------------------------------+
+                                        | ONNX Runtime (Local Inference)
+                                        v
++----------------------------------------------------------------------------+
+|        HUGGING FACE BERT ENGINE (@xenova/transformers — DistilBERT)        |
+|  - Model: Xenova/distilbert-base-uncased-finetuned-sst-2-english           |
+|  - Tokenizes customer reviews with WordPiece & runs 6-layer Transformer    |
+|  - Combines BERT sentiment probability + rating-sentiment consistency      |
+|    + promotional spam detection to label reviews GENUINE or FAKE           |
++----------------------------------------------------------------------------+
 ```
 
 ### 1. Multi-Mart Catalog & Varied Stock Availability (50 Products, 4 Marts)
@@ -85,17 +85,17 @@ Located in `SSA-server/server/services/bert.service.js`:
 1. **Transformer Inference:** Uses `@xenova/transformers` to load `Xenova/distilbert-base-uncased-finetuned-sst-2-english` locally in Node.js (no external API key required).
 2. **Contextual Sentiment & Softmax Confidence:** Each review is tokenized and passed through the BERT model to extract `bertSentiment` (`POSITIVE` / `NEGATIVE`) and `bertSentimentScore` (`0.000` – `1.000`).
 3. **Authenticity Classification (`GENUINE` vs. `FAKE`):**
-   - **Sentiment–Rating Contradiction:** Flags 5★ reviews where BERT detects strong `NEGATIVE` sentiment and complaint terminology, or 1★ reviews with positive hyperbole.
+   - **Sentiment–Rating Contradiction:** Flags 5-star reviews where BERT detects strong `NEGATIVE` sentiment and complaint terminology, or 1-star reviews with positive hyperbole.
    - **Promotional Bot Hyperbole:** Flags reviews with extreme BERT positive scores paired with generic spam phrases (`"100% original"`, `"buy now"`, `"A++++"`, `"best product ever"`), excessive exclamation marks, and zero concrete buyer details.
    - **Verified Buyer Experience:** Reviews mentioning concrete product/store details (factory seal, serial verification, warranty card, checkout wait time, evening parking) are labeled `GENUINE`.
-4. **Genuine Rating Adjustment:** Filters out `FAKE` reviews to compute each mart's true `genuineRating` so bot-inflated 5★ reviews cannot mislead shoppers.
+4. **Genuine Rating Adjustment:** Filters out `FAKE` reviews to compute each mart's true `genuineRating` so bot-inflated 5-star reviews cannot mislead shoppers.
 
 ### 3. Customer-Driven Decision Making (No Biased Pre-Selection)
 ShopSense AI never pre-selects a mart or pushes biased badges like *"Lowest Price"* or *"Best Choice"*. Instead, it gives the customer transparent data—**Price**, **Distance (`km`)**, **Rating**, and **Genuine/Fake Review badges**—so a customer who wants the lowest price even with lower reviews, or the closest mart to their home, can choose freely.
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -129,7 +129,7 @@ curl -X POST http://localhost:5000/api/reviews/analyze \
 
 ---
 
-## 🚀 Getting Started (Run Locally)
+## Getting Started (Run Locally)
 
 ### 1. Clone the Repositories
 ```bash
@@ -169,7 +169,7 @@ Open **`http://localhost:5173`** in your browser.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React 18, TypeScript, Vite, Tailwind CSS (Light & Dark Mode), Lucide Icons, React Router v6, Axios
 - **Backend:** Node.js, Express.js, Mongoose / MongoDB, JSON Web Tokens (JWT), bcrypt
