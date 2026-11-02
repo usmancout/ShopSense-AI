@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -18,6 +18,9 @@ const SignIn: React.FC = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromLocation = (location.state as any)?.from;
+  const redirectPath = fromLocation ? `${fromLocation.pathname}${fromLocation.search || ''}` : '/search';
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -44,7 +47,7 @@ const SignIn: React.FC = () => {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
-      navigate('/search');
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       setErrors({ general: 'Invalid email or password. Please try again.' });
     } finally {
@@ -58,7 +61,7 @@ const SignIn: React.FC = () => {
     onSuccess: async tokenResponse => {
       try {
         await handleGoogleLogin(tokenResponse.access_token);
-        navigate('/search');
+        navigate(redirectPath, { replace: true });
       } catch (error) {
         console.error('Google login failed:', error);
       }

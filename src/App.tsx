@@ -2,7 +2,6 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from './components/Header';
-import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 import { Spinner } from './components/ui';
 import { AuthProvider } from './contexts/AuthContext';
@@ -23,7 +22,6 @@ const About = lazy(() => import('./pages/About'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
-// Scroll to top on route change
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
@@ -39,46 +37,44 @@ const ScrollToTop = () => {
 
 function App() {
   return (
-      <GoogleOAuthProvider clientId="370908799853-lsocbk1j2rcqh9atl4etren40squisko.apps.googleusercontent.com">
-        <AuthProvider>
-          <Router>
-            <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-              <Header />
-              <main className="flex-1 overflow-hidden">
-                <ScrollToTop />
-                <Suspense fallback={
-                  <div className="min-h-screen flex items-center justify-center">
+    <GoogleOAuthProvider clientId="370908799853-lsocbk1j2rcqh9atl4etren40squisko.apps.googleusercontent.com">
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+            <Header />
+            <main className="flex-1 overflow-hidden">
+              <ScrollToTop />
+              <Suspense
+                fallback={
+                  <div className="min-h-screen flex items-center justify-center bg-slate-50">
                     <Spinner />
                   </div>
-                }>
-                  <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/signup" element={<SignUp />} />
-                    <Route path="/signin" element={<SignIn />} />
-                    <Route path="/search" element={
-                      <ProtectedRoute>
-                        <ProductSearch />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/terms-of-service" element={<TermsOfService />} />
-                    <Route path="/cookie-policy" element={<CookiePolicy />} />
-                    <Route path="/gdpr-compliance" element={<GDPRCompliance />} />
-                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-                  </Routes>
-                </Suspense>
-              </main>
-              <Footer />
-            </div>
-          </Router>
-        </AuthProvider>
-      </GoogleOAuthProvider>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/search" element={<ProductSearch />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-of-service" element={<TermsOfService />} />
+                  <Route path="/cookie-policy" element={<CookiePolicy />} />
+                  <Route path="/gdpr-compliance" element={<GDPRCompliance />} />
+                  <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                </Routes>
+              </Suspense>
+            </main>
+            <Footer />
+          </div>
+        </Router>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

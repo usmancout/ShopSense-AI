@@ -1,5 +1,43 @@
+export interface ReviewItem {
+  user: string;
+  rating: number;
+  text: string;
+  date: string;
+  bertLabel: 'GENUINE' | 'FAKE';
+  bertConfidence: number;
+  bertReason?: string;
+}
+
+export interface ProductOffer {
+  store: string;
+  martId: string;
+  martName: string;
+  martAddress: string;
+  lat?: number;
+  lng?: number;
+  distanceKm?: number;
+  driveMinutes?: number;
+  price: number;
+  originalPrice?: number;
+  rawRating?: number;
+  rating?: number;
+  reviewCount?: number;
+  genuineReviewCount?: number;
+  fakeReviewCount?: number;
+  fakeReviewPercentage?: number;
+  bertTrustScore?: number;
+  reviews?: ReviewItem[];
+  reviewSummary?: string;
+  scenarioTag?: string;
+  inStock: boolean;
+  stockCount?: number;
+  deliveryEstimate?: string;
+  url: string;
+}
+
 export interface Product {
   id: string;
+  productId?: string;
   name: string;
   brand: string;
   price: number;
@@ -9,12 +47,28 @@ export interface Product {
   image: string;
   category: string;
   store: string;
+  martId?: string;
+  martName?: string;
+  martAddress?: string;
+  lat?: number;
+  lng?: number;
+  distanceKm?: number;
+  driveMinutes?: number;
+  deliveryEstimate?: string;
   inStock: boolean;
   description: string;
   features: string[];
   tags: string[];
   url: string;
-
+  lowestPrice?: number;
+  highestPrice?: number;
+  maxSavings?: number;
+  bestStore?: string;
+  bestMartName?: string;
+  nearestMartName?: string;
+  nearestDistanceKm?: number;
+  nearestMartPrice?: number;
+  offers?: ProductOffer[];
 }
 
 export const mockProducts: Product[] = [
@@ -165,20 +219,15 @@ export const categories = [
 
 export const stores = [
   'All Stores',
-  'TechMart',
-  'ElectroWorld',
-  'SneakerHub',
-  'AudioPlus',
-  'KitchenMart',
-  'BookCorner',
-  'FitGear',
-  'BeautyWorld'
+  'Martello',
+  'Prodexa',
+  'Storenta'
 ];
 export const sortOptions = [
-  { value: 'relevance', label: 'Relevance' },
-  { value: 'price-low', label: 'Price: Low to High' },
-  { value: 'price-high', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Highest Rated' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'popularity', label: 'Most Popular' }
+  { value: 'relevance', label: 'All Products' },
+  { value: 'price-low', label: 'Lowest Mart Price First' },
+  { value: 'distance', label: 'Closest Mart Available' },
+  { value: 'rating', label: 'Highest Product Rating' },
+  { value: 'savings', label: 'Largest Price Difference' },
+  { value: 'price-high', label: 'Price: High to Low' }
 ];

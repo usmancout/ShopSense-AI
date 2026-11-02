@@ -1,9 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { Product } from '../data/products';
 
 export const useWishlist = () => {
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const fetchInitialWishlist = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/wishlist`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (Array.isArray(response.data?.wishlist)) {
+          setWishlist(new Set(response.data.wishlist.map((item: { productId: string }) => item.productId)));
+        }
+      } catch (err) {
+        console.error('Failed to load initial wishlist:', err);
+      }
+    };
+    fetchInitialWishlist();
+  }, []);
 
   const toggleWishlist = useCallback(async (product: Product) => {
     try {

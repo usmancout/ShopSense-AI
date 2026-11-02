@@ -1,29 +1,23 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Clock, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, useAnimation } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import { Mail, Phone, MapPin, Send, Clock, CheckCircle, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 
 const faqs = [
   {
-    question: "What is ShopSenseAI?",
-    answer: "ShopSenseAI is a centralized e-commerce platform that helps you search, compare, and shop products from multiple stores in one place."
+    question: 'What is ShopSense AI?',
+    answer: 'ShopSense AI is a multi-mart comparison platform that helps you compare prices, check store distances from your house, and inspect customer reviews for authenticity across Martello, Prodexa, and Storenta.'
   },
   {
-    question: "How do I search for products?",
-    answer: "Simply use the search bar on the homepage to find products by name, brand, or category. You can also filter results by store, price, and more."
+    question: 'How does the customer review check work?',
+    answer: 'When you click "View Reviews" on any store offer, our AI Review Analysis labels each review as either Genuine Review or Fake Review so you are not misled by bot or promotional spam.'
   },
   {
-    question: "Can I buy from different stores in a single checkout?",
-    answer: "ShopSenseAI allows you to browse products from many stores, but checkout is completed on each respective store's website."
+    question: 'Why are some marts not shown for certain products?',
+    answer: 'Not every product is stocked at every mart. We only display the marts where your searched product is actually available in stock.'
   },
   {
-    question: "How do I track my orders?",
-    answer: "Order tracking is managed by the individual stores where you completed your checkout. ShopSenseAI provides links to each store's order tracking page."
-  },
-  {
-    question: "Is my personal data safe?",
-    answer: "Yes, we take your privacy seriously. ShopSenseAI only stores your data with your consent and never shares it with third parties without your approval."
-  },
+    question: 'Does ShopSense AI pre-select a store for me?',
+    answer: 'No. We display Price, Distance, and Customer Reviews side-by-side neutrally so you can decide which store works best for you.'
+  }
 ];
 
 const Contact: React.FC = () => {
@@ -37,75 +31,28 @@ const Contact: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
 
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    threshold: 0.1,
-    triggerOnce: false
-  });
-
-  React.useEffect(() => {
-    if (inView) {
-      controls.start('visible');
-    }
-  }, [controls, inView]);
-
-  // Animation variants
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5
-      }
-    }
-  };
-
-  const slideInFromLeft = {
-    hidden: { x: -50, opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { duration: 0.6 } }
-  };
-
-  const slideInFromRight = {
-    hidden: { x: 50, opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { duration: 0.6 } }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const response = await fetch('https://formspree.io/f/mnnvkapq', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    });
-
-    if (response.ok) {
-      setIsSubmitted(true);
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
+    try {
+      const response = await fetch('https://formspree.io/f/mnnvkapq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
-    } else {
-      alert('Something went wrong. Please try again.');
-    }
 
-    setIsLoading(false);
+      if (response.ok) {
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    } catch {
+      setIsSubmitted(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -115,430 +62,228 @@ const Contact: React.FC = () => {
 
   if (isSubmitted) {
     return (
-        <motion.div
-            className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-        >
-          <motion.div
-              className="max-w-md w-full text-center"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 100 }}
+      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center bg-slate-50">
+        <div className="max-w-md w-full text-center bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <div className="bg-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <CheckCircle className="h-7 w-7 text-white" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Message Sent!</h2>
+          <p className="text-slate-600 text-sm mb-6">
+            Thank you for reaching out to ShopSense AI. Our team will get back to you within 24 hours.
+          </p>
+          <button
+            onClick={() => setIsSubmitted(false)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition-colors text-sm"
           >
-            <div className="bg-gray-800 rounded-xl p-8">
-              <motion.div
-                  className="bg-green-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2 }}
-              >
-                <CheckCircle className="h-8 w-8 text-white" />
-              </motion.div>
-              <motion.h2
-                  className="text-2xl font-bold mb-2"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-              >
-                Message Sent!
-              </motion.h2>
-              <motion.p
-                  className="text-gray-400 mb-6"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-              >
-                Thank you for contacting us. We'll get back to you within 24 hours.
-              </motion.p>
-              <motion.button
-                  onClick={() => setIsSubmitted(false)}
-                  className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg transition-colors"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-              >
-                Send Another Message
-              </motion.button>
-            </div>
-          </motion.div>
-        </motion.div>
+            Send Another Message
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <motion.div
-              className="text-center mb-12"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-          >
-            <motion.h1
-                className="text-4xl font-bold mb-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-            >
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              Contact
-            </span>{' '}
-              <span className="text-white">Us</span>
-            </motion.h1>
-            <motion.p
-                className="text-xl text-gray-400 max-w-2xl mx-auto"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-            >
-              Have questions about ShopSenseAI? We're here to help you make the most of your smart shopping experience.
-            </motion.p>
-          </motion.div>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      {/* Header Banner */}
+      <section className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 bg-gradient-to-b from-emerald-50/60 via-white to-slate-50 text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="inline-flex items-center space-x-2 bg-white border border-emerald-200 shadow-sm px-4 py-1.5 rounded-full text-xs font-bold text-emerald-800 mb-5">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+            <span>Get In Touch</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
+            Contact <span className="text-emerald-600">ShopSense AI</span>
+          </h1>
+          <p className="text-base sm:text-lg text-slate-600">
+            Have questions about store comparisons, partner marts, or review verification? We are here to help.
+          </p>
+        </div>
+      </section>
 
-          <motion.div
-              className="grid lg:grid-cols-3 gap-12"
-              ref={ref}
-              initial="hidden"
-              animate={controls}
-              variants={container}
-          >
-            {/* Contact Information */}
-            <motion.div
-                className="space-y-8"
-                variants={slideInFromLeft}
-            >
-              <motion.div
-                  className="bg-gray-800 rounded-xl p-6"
-                  whileHover={{ y: -5 }}
-              >
-                <h2 className="text-xl font-semibold mb-6">Contact Information</h2>
-
-                <div className="space-y-6">
-                  <motion.div
-                      className="flex items-start space-x-4"
-                      variants={item}
-                  >
-                    <motion.div
-                        className="bg-purple-600 p-3 rounded-lg"
-                        whileHover={{ rotate: 15 }}
-                    >
-                      <Mail className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Email Us</h3>
-                      <p className="text-gray-400 text-sm mb-2">Send us an email anytime</p>
-                      <a href="mailto:support@shopsenseai.com" className="text-purple-400 hover:text-purple-300">
-                        support@shopsenseai.com
-                      </a>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                      className="flex items-start space-x-4"
-                      variants={item}
-                  >
-                    <motion.div
-                        className="bg-blue-600 p-3 rounded-lg"
-                        whileHover={{ rotate: 15 }}
-                    >
-                      <Phone className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Call Us</h3>
-                      <p className="text-gray-400 text-sm mb-2">Mon-Fri from 8am to 5pm</p>
-                      <a href="tel:+923446679756" className="text-purple-400 hover:text-purple-300">
-                        +923446679756
-                      </a>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                      className="flex items-start space-x-4"
-                      variants={item}
-                  >
-                    <motion.div
-                        className="bg-green-600 p-3 rounded-lg"
-                        whileHover={{ rotate: 15 }}
-                    >
-                      <MapPin className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Visit Us</h3>
-                      <p className="text-gray-400 text-sm">
-                        47 C Civic Center Johar Town Block D، 2<br/>
-                        Block D 2 Phase 1 Johar Town<br/>
-                        Lahore, 54600, Pakistan
-                      </p>
-                    </div>
-                  </motion.div>
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Column: Contact Info & FAQ */}
+          <div className="space-y-6">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900 mb-5">Contact Information</h2>
+              <div className="space-y-5">
+                <div className="flex items-start space-x-3.5">
+                  <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-emerald-600 flex-shrink-0">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">Email Us</h3>
+                    <p className="text-slate-500 text-xs mb-1">Send us an email anytime</p>
+                    <a href="mailto:shopsense@gmail.com" className="text-emerald-600 hover:text-emerald-700 text-xs font-semibold">
+                      shopsense@gmail.com
+                    </a>
+                  </div>
                 </div>
-              </motion.div>
 
-              {/* Business Hours */}
-              <motion.div
-                  className="bg-gray-800 rounded-xl p-6"
-                  variants={item}
-                  whileHover={{ y: -5 }}
-              >
-                <motion.h3
-                    className="text-lg font-semibold mb-4 flex items-center space-x-2"
-                    whileHover={{ x: 5 }}
-                >
-                  <Clock className="h-5 w-5" />
-                  <span>Business Hours</span>
-                </motion.h3>
-                <div className="space-y-2 text-sm">
-                  <motion.div
-                      className="flex justify-between"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                  >
-                    <span className="text-gray-400">Monday - Friday</span>
-                    <span>8:00 AM - 5:00 PM PST</span>
-                  </motion.div>
-                  <motion.div
-                      className="flex justify-between"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                  >
-                    <span className="text-gray-400">Saturday</span>
-                    <span>9:00 AM - 1:00 PM PST</span>
-                  </motion.div>
-                  <motion.div
-                      className="flex justify-between"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
-                  >
-                    <span className="text-gray-400">Sunday</span>
-                    <span className="text-red-400">Closed</span>
-                  </motion.div>
+                <div className="flex items-start space-x-3.5">
+                  <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-emerald-600 flex-shrink-0">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">Call Us</h3>
+                    <p className="text-slate-500 text-xs mb-1">Mon–Fri from 9am to 6pm</p>
+                    <a href="tel:+923446679756" className="text-emerald-600 hover:text-emerald-700 text-xs font-semibold">
+                      +92 344 6679756
+                    </a>
+                  </div>
                 </div>
-              </motion.div>
 
-              {/* FAQ Link */}
-              <motion.div
-                  className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl p-6"
-                  variants={item}
-                  whileHover={{ scale: 1.02 }}
+                <div className="flex items-start space-x-3.5">
+                  <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-emerald-600 flex-shrink-0">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">Location</h3>
+                    <p className="text-slate-500 text-xs leading-relaxed">
+                      Civic Center Johar Town, Block D2<br />
+                      Lahore, 54600, Pakistan
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Business Hours */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-emerald-600" />
+                <span>Support Hours</span>
+              </h3>
+              <div className="space-y-2.5 text-xs sm:text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Monday – Friday</span>
+                  <span className="font-semibold text-slate-800">9:00 AM – 6:00 PM PKT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Saturday</span>
+                  <span className="font-semibold text-slate-800">10:00 AM – 2:00 PM PKT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Sunday</span>
+                  <span className="font-semibold text-rose-600">Closed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Answers / FAQ */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">Frequently Asked Questions</h3>
+              <p className="text-slate-500 text-xs mb-4">
+                Quick answers about how ShopSense AI compares marts and reviews.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowFAQ(v => !v)}
+                className="bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-xl text-xs font-bold transition-colors inline-flex items-center space-x-1.5"
               >
-                <h3 className="text-lg font-semibold mb-2">Quick Answers</h3>
-                <p className="text-gray-300 text-sm mb-4">
-                  Check our FAQ section for instant answers to common questions.
-                </p>
-                <motion.button
-                    className="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2"
-                    onClick={() => setShowFAQ(v => !v)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                  <span>{showFAQ ? "Hide FAQ" : "View FAQ"}</span>
-                  {showFAQ ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </motion.button>
-                {showFAQ && (
-                    <motion.div
-                        className="mt-6 space-y-4"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                      {faqs.map((faq, idx) => (
-                          <motion.div
-                              key={idx}
-                              className="bg-gray-900 rounded-lg p-4 text-sm"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: idx * 0.1 }}
-                          >
-                            <details className="group">
-                              <summary className="font-semibold cursor-pointer text-purple-400 group-open:text-purple-300">
-                                {faq.question}
-                              </summary>
-                              <motion.div
-                                  className="mt-2 text-gray-300"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ delay: 0.1 }}
-                              >
-                                {faq.answer}
-                              </motion.div>
-                            </details>
-                          </motion.div>
-                      ))}
-                    </motion.div>
-                )}
-              </motion.div>
-            </motion.div>
+                <span>{showFAQ ? 'Hide FAQs' : 'View FAQs'}</span>
+                {showFAQ ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </button>
 
-            {/* Contact Form */}
-            <motion.div
-                className="lg:col-span-2"
-                variants={slideInFromRight}
-            >
-              <motion.div
-                  className="bg-gray-800 rounded-xl p-8"
-                  whileHover={{
-                    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                  }}
-              >
-                <motion.h2
-                    className="text-2xl font-semibold mb-6"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                >
-                  Send us a Message
-                </motion.h2>
+              {showFAQ && (
+                <div className="mt-4 space-y-2.5">
+                  {faqs.map((faq, idx) => (
+                    <div key={idx} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-xs">
+                      <p className="font-bold text-slate-900 mb-1">{faq.question}</p>
+                      <p className="text-slate-600 leading-relaxed">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <motion.div
-                      className="grid md:grid-cols-2 gap-6"
-                      variants={container}
-                      initial="hidden"
-                      animate="visible"
-                  >
-                    <motion.div variants={item}>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Full Name *
-                      </label>
-                      <input
-                          type="text"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          required
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          placeholder="Your full name"
-                      />
-                    </motion.div>
+          {/* Right Column: Contact Form */}
+          <div className="lg:col-span-2">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-sm">
+              <h2 className="text-xl font-extrabold text-slate-900 mb-6">Send Us a Message</h2>
 
-                    <motion.div variants={item}>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Email Address *
-                      </label>
-                      <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          required
-                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          placeholder="your@email.com"
-                      />
-                    </motion.div>
-                  </motion.div>
-
-                  <motion.div variants={item}>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Subject *
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                      Full Name *
                     </label>
-                    <select
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="">Select a subject</option>
-                      <option value="general">General Inquiry</option>
-                      <option value="support">Technical Support</option>
-                      <option value="billing">Billing Question</option>
-                      <option value="feature">Feature Request</option>
-                      <option value="partnership">Partnership</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </motion.div>
-
-                  <motion.div variants={item}>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Message *
-                    </label>
-                    <textarea
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        required
-                        rows={6}
-                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Tell us how we can help you..."
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                      placeholder="Your full name"
                     />
-                  </motion.div>
+                  </div>
 
-                  <motion.button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white py-3 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Subject *
+                  </label>
+                  <select
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
                   >
-                    {isLoading ? (
-                        <motion.div
-                            className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                        />
-                    ) : (
-                        <>
-                          <Send className="h-5 w-5" />
-                          <span>Send Message</span>
-                        </>
-                    )}
-                  </motion.button>
-                </form>
-              </motion.div>
-            </motion.div>
-          </motion.div>
+                    <option value="">Select a subject</option>
+                    <option value="general">General Inquiry</option>
+                    <option value="support">Technical Support</option>
+                    <option value="feature">Feature Request</option>
+                    <option value="partnership">Store Partnership</option>
+                  </select>
+                </div>
 
-          {/* Map Section */}
-          <motion.div
-              className="mt-12"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              viewport={{ once: true }}
-          >
-            <motion.div
-                className="bg-gray-800 rounded-xl p-6"
-                whileHover={{ y: -5 }}
-            >
-              <motion.h2
-                  className="text-xl font-semibold mb-4"
-                  whileHover={{ x: 5 }}
-              >
-                Find Us
-              </motion.h2>
-              <motion.a
-                  href="https://maps.app.goo.gl/T9tSzhvWEYN7Kkp57"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-gray-700 rounded-lg h-64 flex items-center justify-center hover:ring-2 hover:ring-purple-500 transition-all"
-                  whileHover={{ scale: 1.01 }}
-              >
-                <motion.div
-                    className="text-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Message *
+                  </label>
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
+                    rows={5}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                    placeholder="How can we help you?"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-3.5 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2 text-sm shadow-sm"
                 >
-                  <MapPin className="h-12 w-12 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400">Click to view us on Google Maps</p>
-                  <p className="text-sm text-gray-500">
-                    47 C Civic Center Johar Town Block D، 2, Block D 2 Phase 1 Johar Town, Lahore, 54600, Pakistan
-                  </p>
-                </motion.div>
-              </motion.a>
-            </motion.div>
-          </motion.div>
+                  <Send className="h-4 w-4" />
+                  <span>{isLoading ? 'Sending...' : 'Send Message'}</span>
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
   );
 };
 

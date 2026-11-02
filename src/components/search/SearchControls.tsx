@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, Grid, List } from 'lucide-react';
+import { Filter, Grid, List, ArrowUpDown } from 'lucide-react';
 
 interface SearchControlsProps {
   showFilters: boolean;
@@ -29,57 +29,78 @@ export const SearchControls: React.FC<SearchControlsProps> = ({
   onMartChange
 }) => {
   return (
-    <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-      <div className="flex items-center space-x-3 sm:space-x-4">
+    <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between bg-white border border-slate-200/90 rounded-2xl px-4 py-3 shadow-sm">
+      <div className="flex items-center space-x-3">
         <button
           onClick={onToggleFilters}
-          className="flex items-center space-x-2 bg-gray-800 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+          className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl border transition-all text-xs sm:text-sm font-semibold ${
+            showFilters
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+              : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+          }`}
         >
-          <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Filter className="h-4 w-4 text-emerald-600" />
           <span>Filters</span>
         </button>
-        <div className="flex items-center space-x-1 bg-gray-800 rounded-lg p-1">
+
+        <div className="flex items-center bg-slate-100 border border-slate-200/80 rounded-xl p-0.5">
           <button
             onClick={() => onViewModeChange('grid')}
-            className={`p-1.5 sm:p-2 rounded transition-colors ${
-              viewMode === 'grid' ? 'bg-purple-600' : 'hover:bg-gray-700'
+            className={`p-1.5 rounded-lg transition-all ${
+              viewMode === 'grid'
+                ? 'bg-white text-emerald-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
+            title="Grid View"
           >
-            <Grid className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Grid className="h-4 w-4" />
           </button>
           <button
             onClick={() => onViewModeChange('list')}
-            className={`p-1.5 sm:p-2 rounded transition-colors ${
-              viewMode === 'list' ? 'bg-purple-600' : 'hover:bg-gray-700'
+            className={`p-1.5 rounded-lg transition-all ${
+              viewMode === 'list'
+                ? 'bg-white text-emerald-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
+            title="List View"
           >
-            <List className="h-4 w-4 sm:h-5 sm:w-5" />
+            <List className="h-4 w-4" />
           </button>
         </div>
+
+        <span className="text-xs sm:text-sm text-slate-500 pl-1">
+          Showing <strong className="text-slate-900 font-bold">{resultsCount}</strong> {resultsCount === 1 ? 'product' : 'products'}
+        </span>
       </div>
-      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-        <span className="text-gray-400 text-sm">{resultsCount} results</span>
-        <select
-          value={sortBy}
-          onChange={(e) => onSortChange(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        >
-          {sortOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedMart}
-          onChange={(e) => onMartChange(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        >
-          <option value="Select Mart">Select Mart</option>
-          {martLocations.map(mart => (
-            <option key={mart.id} value={mart.id}>{mart.name}</option>
-          ))}
-        </select>
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative flex items-center">
+          <ArrowUpDown className="h-3.5 w-3.5 text-emerald-600 absolute left-3 pointer-events-none" />
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value)}
+            className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl pl-8 pr-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs sm:text-sm font-semibold"
+          >
+            {sortOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {martLocations.length > 0 && (
+          <select
+            value={selectedMart}
+            onChange={(e) => onMartChange(e.target.value)}
+            className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl px-3.5 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs sm:text-sm font-semibold"
+          >
+            <option value="Select Mart">All Available Marts</option>
+            {martLocations.map(mart => (
+              <option key={mart.id} value={mart.id}>{mart.name}</option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   );

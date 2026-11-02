@@ -17,7 +17,8 @@ interface RecentSearch {
 }
 
 interface ActivityItem {
-  type: string;
+  type?: string;
+  activityType?: string;
   description: string;
   timestamp: string;
 }
@@ -197,17 +198,19 @@ const Dashboard: React.FC = () => {
                 <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Activity</h2>
                 {dashboardData.recentActivity.length > 0 ? (
                     <div className="space-y-3 sm:space-y-4">
-                      {dashboardData.recentActivity.slice(0, 5).map((activity, index) => (
+                      {dashboardData.recentActivity.slice(0, 5).map((activity, index) => {
+                          const activityType = activity.type || activity.activityType || '';
+                          return (
                           <div key={index} className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 bg-gray-700 rounded-lg">
-                            <div className={`${getActivityColor(activity.type)} p-2 rounded-lg flex-shrink-0`}>
-                              {getActivityIcon(activity.type)}
+                            <div className={`${getActivityColor(activityType)} p-2 rounded-lg flex-shrink-0`}>
+                              {getActivityIcon(activityType)}
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-sm sm:text-base">{activity.description}</p>
                               <p className="text-xs sm:text-sm text-gray-400">{formatTimeAgo(activity.timestamp)}</p>
                             </div>
                           </div>
-                      ))}
+                      )})}
                     </div>
                 ) : (
                     <div className="text-center py-8">
@@ -314,9 +317,12 @@ const Dashboard: React.FC = () => {
                           )}
                           <div className="flex items-center justify-between">
                             <span className="text-base sm:text-lg font-bold">${product.price}</span>
-                            <button className="text-purple-400 hover:text-purple-300 text-xs sm:text-sm font-medium">
-                              View Details
-                            </button>
+                            <Link
+                              to={`/search?q=${encodeURIComponent(product.name)}`}
+                              className="text-purple-400 hover:text-purple-300 text-xs sm:text-sm font-medium"
+                            >
+                              Compare Marts
+                            </Link>
                           </div>
                         </div>
                       </div>

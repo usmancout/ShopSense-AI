@@ -15,6 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (data: { username: string; email: string; password: string }) => Promise<void>;
   googleLogin: (token: string) => Promise<void>;
@@ -35,12 +36,15 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(!!localStorage.getItem('token'));
 
   // Re-authenticate on mount if a token exists
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      getProfile(); // Fetch user profile to restore state
+      getProfile().finally(() => setIsLoading(false)); // Fetch user profile to restore state
+    } else {
+      setIsLoading(false);
     }
   }, []);
 
@@ -116,6 +120,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           value={{
             user,
             isAuthenticated: !!user,
+            isLoading,
             login,
             signup,
             googleLogin,
