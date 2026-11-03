@@ -15,6 +15,10 @@ import {
   User
 } from 'lucide-react';
 import { mockProducts, Product } from '../data/products';
+import { searchClientVectorDB } from '../utils/ragVectorClient';
+import axios from 'axios';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface ChatProductSummary {
   id: string;
@@ -244,7 +248,7 @@ const ChatBot: React.FC = () => {
     return results;
   };
 
-  const generateBotResponse = (userText: string): Omit<ChatMessage, 'id' | 'sender' | 'timestamp'> => {
+  const generateBotResponse = async (userText: string): Promise<Omit<ChatMessage, 'id' | 'sender' | 'timestamp'>> => {
     const lower = userText.toLowerCase().trim();
 
     // 1. Acknowledgment / Closing ("ok", "okay", "thanks", "thank you", "done", "got it", "no", "bye")
@@ -294,11 +298,30 @@ const ChatBot: React.FC = () => {
       };
     }
 
-    // 6. Product & Multi-Item Search + Budget Filtering
+    // 6. RAG + Vector DB Product Retrieval (Fetches from SSA-server Vector DB first, falls back to client 384-D Vector Index)
     const budgetMatch = userText.match(/(?:under|below|less than|max|budget(?:\s+of)?)\s*\$?\s*(\d+)/i);
     const maxBudget = budgetMatch ? Number(budgetMatch[1]) : null;
 
-    const matchedProducts = matchProductsConversational(userText, maxBudget);
+    let matchedProducts: Product[] = [];
+    try {
+      const { data } = await axios.post(
+        `${API_BASE}/api/chat`,
+        { message: userText },
+        { timeout: 3500 }
+      );
+      if (Array.isArray(data?.products) && data.products.length > 0) {
+        matchedProducts = data.products;
+      }
+    } catch {
+      // Fallback to client-side 384-D Vector DB + Cosine Similarity index when backend is offline
+      const clientRag = searchClientVectorDB(userText, maxBudget, 4);
+      matchedProducts = clientRag.products;
+    }
+
+    if (matchedProducts.length === 0) {
+      const clientRag = searchClientVectorDB(userText, maxBudget, 4);
+      matchedProducts = clientRag.products;
+    }
 
     if (matchedProducts.length > 0) {
       // Pick up to 2 representative items (e.g. 1 shoe + 1 shirt for multi-item queries) so the chat stays compact
@@ -322,7 +345,7 @@ const ChatBot: React.FC = () => {
       const first = topProducts[0];
       const budgetNote = maxBudget ? ` under $${maxBudget}` : '';
 
-      const advice = `Found ${matchedProducts.length} ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote}. Best pick: ${first.trustedMartName} ($${first.trustedMartPrice}).`;
+      const advice = `Retrieved ${matchedProducts.length} ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote} from Vector DB. Best pick: ${first.trustedMartName} ($${first.trustedMartPrice}).`;
 
       return {
         text: advice,
@@ -341,7 +364,7 @@ const ChatBot: React.FC = () => {
     };
   };
 
-  const handleSend = (customPrompt?: string) => {
+  const handleSend = async (customPrompt?: string) => {
     const textToSend = (customPrompt ?? input).trim();
     if (!textToSend || isTyping) return;
 
@@ -356,17 +379,15 @@ const ChatBot: React.FC = () => {
     if (!customPrompt) setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const response = generateBotResponse(textToSend);
-      const botMsg: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        sender: 'bot',
-        timestamp: 'Just now',
-        ...response
-      };
-      setMessages(prev => [...prev, botMsg]);
-      setIsTyping(false);
-    }, 350);
+    const response = await generateBotResponse(textToSend);
+    const botMsg: ChatMessage = {
+      id: `bot-${Date.now()}`,
+      sender: 'bot',
+      timestamp: 'Just now',
+      ...response
+    };
+    setMessages(prev => [...prev, botMsg]);
+    setIsTyping(false);
   };
 
   const handleReset = () => {
@@ -396,7 +417,7 @@ const ChatBot: React.FC = () => {
                   <h3 className="text-sm font-extrabold tracking-tight text-white">ShopSense AI Assistant</h3>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 </div>
-                <p className="text-[11px] text-slate-300">Price, Distance & Review Advisor</p>
+                <p className="text-[11px] text-slate-300">RAG • Vector DB (384-D) Mart Advisor</p>
               </div>
             </div>
             <div className="flex items-center space-x-1">
