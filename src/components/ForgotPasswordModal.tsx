@@ -33,40 +33,29 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
     setError('');
 
     try {
-      const isLocal =
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // 1. Primary: Always call SSA-server backend (/api/auth/forgot-password) first
+      await axios.post(
+        `${API_BASE}/api/auth/forgot-password`,
+        { email: cleanEmail },
+        { timeout: 8000 }
+      );
 
-      if (isLocal) {
-        await axios.post(
-          `${API_BASE}/api/auth/forgot-password`,
-          { email: cleanEmail },
-          { timeout: 10000 }
-        );
-      } else {
-        // On Vercel, call the built-in serverless Gmail dispatcher /api/forgot-password
+      localStorage.setItem('shopsense_pending_reset_email', cleanEmail);
+      setIsSuccess(true);
+    } catch (err: any) {
+      // 2. Fallback: If SSA-server is not reachable from a cloud browser (e.g. Vercel), use serverless SMTP
+      try {
         await axios.post(
           '/api/forgot-password',
           { email: cleanEmail, origin: window.location.origin },
           { timeout: 10000 }
         );
-      }
-
-      localStorage.setItem('shopsense_pending_reset_email', cleanEmail);
-      setIsSuccess(true);
-    } catch (err: any) {
-      // If one endpoint failed, try the other before showing any error
-      try {
-        await axios.post(
-          `${API_BASE}/api/auth/forgot-password`,
-          { email: cleanEmail },
-          { timeout: 8000 }
-        );
         localStorage.setItem('shopsense_pending_reset_email', cleanEmail);
         setIsSuccess(true);
       } catch (fallbackErr: any) {
         setError(
-          fallbackErr?.response?.data?.message ||
-            err?.response?.data?.message ||
+          err?.response?.data?.message ||
+            fallbackErr?.response?.data?.message ||
             'Failed to send reset email. Please try again.'
         );
       }
