@@ -345,7 +345,7 @@ const ChatBot: React.FC = () => {
       const first = topProducts[0];
       const budgetNote = maxBudget ? ` under $${maxBudget}` : '';
 
-      const advice = `Retrieved ${matchedProducts.length} ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote} from Vector DB. Best pick: ${first.trustedMartName} ($${first.trustedMartPrice}).`;
+      const advice = `Found ${matchedProducts.length} ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote}. Best pick: ${first.trustedMartName} ($${first.trustedMartPrice}).`;
 
       return {
         text: advice,
@@ -417,7 +417,6 @@ const ChatBot: React.FC = () => {
                   <h3 className="text-sm font-extrabold tracking-tight text-white">ShopSense AI Assistant</h3>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 </div>
-                <p className="text-[11px] text-slate-300">RAG • Vector DB (384-D) Mart Advisor</p>
               </div>
             </div>
             <div className="flex items-center space-x-1">
