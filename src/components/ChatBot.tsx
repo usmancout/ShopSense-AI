@@ -87,7 +87,7 @@ const ChatBot: React.FC = () => {
     {
       id: 'welcome-1',
       sender: 'bot',
-      text: 'Hi! I am the ShopSense AI Assistant. Ask me for any product or bundle (e.g., "I want Nike shoes and a shirt" or "laptop under $1500") and I will compare mart prices, distances from your location, and Genuine vs. Fake customer reviews.',
+      text: 'Hi! What product would you like to find or compare today?',
       timestamp: 'Just now'
     }
   ]);
@@ -249,7 +249,7 @@ const ChatBot: React.FC = () => {
     // 1. Greeting / Help
     if (/^(hi|hello|hey|salam|assalam|help|start|how do you work)\b/i.test(lower) && lower.split(/\s+/).length <= 5) {
       return {
-        text: 'Hello! Tell me what you are shopping for—like "I want Nike shoes and a shirt", "best laptop under $1500", or "cheapest iPhone 16 Pro Max"—and I will compare prices, distances, and Genuine vs. Fake reviews across all 4 marts!'
+        text: 'Hello! Tell me a product or budget to compare marts.'
       };
     }
 
@@ -261,19 +261,18 @@ const ChatBot: React.FC = () => {
       })).sort((a, b) => a.distanceKm - b.distanceKm);
 
       const lines = sortedMarts.map(
-        (m, idx) =>
-          `${idx + 1}. ${m.name} (${m.distanceKm.toFixed(1)} km away) — ${m.address} • ${m.productsCount} products in stock • ${m.reviewNote}`
+        (m, idx) => `${idx + 1}. ${m.name} (${m.distanceKm.toFixed(1)} km) • ${m.reviewNote}`
       );
 
       return {
-        text: `Here are the 4 marts sorted by distance from your location:\n\n${lines.join('\n')}\n\nTip: ${sortedMarts[0].name} is closest to you (${sortedMarts[0].distanceKm.toFixed(1)} km), while Prodexa Central has the highest Genuine Review rating (88%).`
+        text: `Marts nearest to you:\n${lines.join('\n')}`
       };
     }
 
     // 3. Review Authenticity Question
     if (/\b(fake review|genuine review|storenta review|trustworthy|are reviews real)\b/i.test(lower) && !/\b(iphone|samsung|nike|laptop|shoes|shirt)\b/i.test(lower)) {
       return {
-        text: 'Every mart offer on ShopSense AI is screened for Fake vs. Genuine customer reviews:\n\n• Prodexa Central & Martello West have 86%–88% Genuine Reviews from verified buyers.\n• Storenta Plaza often lists a lower upfront price, but 60% of its 5-star reviews are flagged as Fake promotional spam.\n\nSearch any product and click "Customer Reviews" on a mart row to inspect the individual Genuine and Fake badges!'
+        text: 'Prodexa Central (88%) and Martello West (86%) have the most Genuine Reviews. Storenta Plaza has 60% Fake Reviews.'
       };
     }
 
@@ -288,12 +287,7 @@ const ChatBot: React.FC = () => {
       const first = topProducts[0];
       const budgetNote = maxBudget ? ` under $${maxBudget}` : '';
 
-      let advice = `I found ${matchedProducts.length} matching ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote} across our partner marts.`;
-      if (first.lowestMartFakePct >= 50 && first.trustedMartName !== first.lowestMartName) {
-        advice += ` Note: For ${first.name}, ${first.lowestMartName} has the lowest price ($${first.lowestPrice}) but ${first.lowestMartFakePct}% of its reviews are flagged as Fake. I recommend ${first.trustedMartName} ($${first.trustedMartPrice}, ${first.trustedMartDistanceKm.toFixed(1)} km away) for verified Genuine Reviews.`;
-      } else {
-        advice += ` Best verified pick: ${first.name} at ${first.trustedMartName} ($${first.trustedMartPrice}, ${first.trustedMartDistanceKm.toFixed(1)} km away).`;
-      }
+      const advice = `Found ${matchedProducts.length} ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote}. Best pick: ${first.trustedMartName} ($${first.trustedMartPrice}).`;
 
       return {
         text: advice,
@@ -308,9 +302,7 @@ const ChatBot: React.FC = () => {
     // Fallback when no specific product matched
     const fallbackPicks = mockProducts.slice(0, 3).map(summarizeProductForChat);
     return {
-      text: maxBudget
-        ? `I couldn't find an exact match under $${maxBudget} for "${userText}". Here are some popular products you can compare across marts, or try asking for "Nike shoes and a shirt", "AirPods Pro", or "laptop under $1500":`
-        : `I couldn't find an exact match for "${userText}", but here are popular products with live mart price & review comparisons. You can ask for items like "I want Nike shoes and a shirt", "Samsung phone", or "laptop under $1500":`,
+      text: `No exact match for "${userText}". Here are top picks:`,
       products: fallbackPicks
     };
   };
@@ -348,7 +340,7 @@ const ChatBot: React.FC = () => {
       {
         id: `welcome-${Date.now()}`,
         sender: 'bot',
-        text: 'Chat cleared! Ask me for any product or multi-item bundle (e.g., "I want Nike shoes and a shirt" or "Best laptop under $1500") to compare mart prices, distances, and Genuine vs. Fake reviews.',
+        text: 'Chat cleared. What product can I find for you?',
         timestamp: 'Just now'
       }
     ]);
