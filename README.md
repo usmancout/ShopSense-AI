@@ -2,10 +2,11 @@
 
 **ShopSense AI** is a full-stack intelligent shopping comparison platform built with the **MERN Stack (MongoDB, Express.js, React + TypeScript, Node.js)** and **Hugging Face BERT (`@xenova/transformers`)**.
 
-It empowers shoppers to search any product across local marts (**Martello Downtown**, **Martello West**, **Prodexa Central**, and **Storenta Plaza**) and compare:
-1. **Real-Time Mart Prices** (with original prices and discounts)
+It empowers shoppers to search products by exact name or natural conversational phrases across local marts (**Martello Downtown**, **Martello West**, **Prodexa Central**, and **Storenta Plaza**) and compare:
+1. **Real-Time Mart Prices** (with original prices and discounts across 50+ products per mart)
 2. **Live Distance (`km`) & Drive Time (`mins`)** from the customer's location using the Haversine formula
 3. **Customer Reviews Classified as `Genuine Review` or `Fake Review`** by a local **66M-parameter Hugging Face DistilBERT Transformer model** (`Xenova/distilbert-base-uncased-finetuned-sst-2-english`)
+4. **ShopSense AI Shopping Assistant Chatbot** for interactive product discovery, budget filtering, distance checks, and review trust advice
 
 ---
 
@@ -20,18 +21,18 @@ ShopSense AI features a unified **Slate & Emerald** design system (`Plus Jakarta
 
 ---
 
-### 2. Product Catalog Browsing (50 Products Across 6 Categories)
-When customers browse the catalog without searching for a specific item, **ShopSense AI** displays clean, standard product cards with category, store, price, and rating filters—without cluttering the screen with mart locations.
+### 2. Product Catalog Browsing (50+ Products per Mart Across 6 Categories)
+When customers browse the catalog without searching for a specific item, **ShopSense AI** displays clean, standard product cards with category-matched product studio illustrations, store filters, price range controls, and rating filters—without cluttering the screen with mart locations.
 
 ![Browse Product Catalog](docs/screenshots/3-browse-catalog.png)
 
 ---
 
-### 3. Specific Product Search — Side-by-Side Mart Comparison & Genuine/Fake Review Badges
-When a customer searches for a specific product (e.g., `iPhone 16 Pro Max`) or clicks **`Compare Marts`**:
+### 3. Specific & Conversational Product Search — Side-by-Side Mart Comparison & Genuine/Fake Review Badges
+When a customer searches for a specific product (e.g., `iPhone 16 Pro Max`), a conversational request (e.g., `I want Nike shoes and a shirt`), or clicks **`Compare Marts`**:
 - **Only the marts where that product is actually in stock are shown** (some products are available at 1 mart, some at 2, 3, or all 4 marts).
-- Each available mart card displays its **Price**, **Distance (`km`)** from the customer, and **Rating**.
-- Clicking **`View Reviews`** opens the customer reviews for that mart, where each review carries a clear **`Genuine Review`** (green) or **`Fake Review`** (red) badge so the shopper can decide for themselves whether to prioritize a lower price, closer distance, or better reviews.
+- Each available mart row displays its **Price**, **Distance (`km`)** from the customer, and **Rating**.
+- Clicking **`Customer Reviews`** opens the customer reviews for that mart, where each review carries a clear **`Genuine Review`** (green) or **`Fake Review`** (red) badge so the shopper can decide whether to prioritize a lower price, closer distance, or verified reviews.
 
 ![Side-by-Side Mart Comparison and Review Authenticity Badges](docs/screenshots/4-mart-comparison-reviews.png)
 
@@ -47,18 +48,20 @@ When a customer searches for a specific product (e.g., `iPhone 16 Pro Max`) or c
 ```
 +----------------------------------------------------------------------------+
 |                        FRONTEND (React + TypeScript + Vite)                |
-|  - Landing Page, Product Search, Dashboard, Wishlist, Auth, Light/Dark UI  |
+|  - Landing Page, Product Search, AI Chatbot, Dashboard, Wishlist, Auth     |
+|  - Conversational multi-item search ("I want Nike shoes and a shirt")      |
 |  - Calculates live GPS/Haversine distance (km) from user to each mart      |
 |  - Shows normal cards on browse; shows available marts on product search   |
 +---------------------------------------+------------------------------------+
-                                        | REST API (Axios)
+                                        | REST API (Axios + Local Fallback)
                                         v
 +----------------------------------------------------------------------------+
 |                     BACKEND (Node.js + Express + MongoDB)                  |
-|  - GET  /api/products                  -> Search & filter 50 products      |
+|  - GET  /api/products                  -> Search & filter catalog          |
 |  - GET  /api/marts                     -> 4 Marts with GPS coordinates     |
 |  - GET  /api/stores/:storeName/products-> Dedicated Mart APIs              |
 |  - POST /api/reviews/analyze           -> Live BERT Review Classifier API  |
+|  - POST /api/chat                      -> Conversational AI Assistant API  |
 +---------------------------------------+------------------------------------+
                                         | ONNX Runtime (Local Inference)
                                         v
@@ -71,16 +74,31 @@ When a customer searches for a specific product (e.g., `iPhone 16 Pro Max`) or c
 +----------------------------------------------------------------------------+
 ```
 
-### 1. Multi-Mart Catalog & Varied Stock Availability (50 Products, 4 Marts)
-The backend seeds **50 products** across **6 categories** (*Electronics, Fashion, Home & Garden, Books, Sports, Beauty*) distributed across **4 marts in Lahore**:
-- **Martello Downtown** — *Johar Town Main Blvd, Lahore* (`31.4697, 74.2728`)
-- **Martello West** — *Wapda Town Roundabout, Lahore* (`31.4312, 74.2644`)
-- **Prodexa Central** — *MM Alam Road, Gulberg III, Lahore* (`31.5102, 74.3441`)
-- **Storenta Plaza** — *DHA Phase 5 Commercial, Lahore* (`31.4625, 74.4085`)
+### 1. Multi-Mart Catalog & Varied Stock Availability (50+ Products per Mart)
+The platform stocks **68 distinct products** across **6 categories** (*Electronics, Fashion, Home & Garden, Books, Sports, Beauty*) distributed across **4 marts in Lahore** so that every mart carries more than 50 products:
+- **Martello Downtown** — *Johar Town Main Blvd, Lahore* (`31.4697, 74.2728`) — **56 products in stock**
+- **Martello West** — *Wapda Town Roundabout, Lahore* (`31.4312, 74.2644`) — **52 products in stock**
+- **Prodexa Central** — *MM Alam Road, Gulberg III, Lahore* (`31.5102, 74.3441`) — **60 products in stock**
+- **Storenta Plaza** — *DHA Phase 5 Commercial, Lahore* (`31.4625, 74.4085`) — **55 products in stock**
 
-Not every product is sold at every mart—some products are stocked at **1 mart**, some at **2 marts**, some at **3 marts**, and some at all **4 marts**. If a product is not available at a particular mart, that mart is automatically excluded from the comparison view.
+Not every product is sold at every mart—some products are stocked at **1 mart**, some at **2 marts**, some at **3 marts**, and some at all **4 marts**. If a product is not available at a particular mart, that mart is automatically excluded from the comparison view. Every product image is generated by `createProductImage` (`productImage.helper.js`) to match its exact brand, category, and product description.
 
-### 2. Real Hugging Face BERT Review Authenticity Classifier
+### 2. Conversational & Multi-Item Natural Language Search
+Customers are not limited to searching by exact model titles. Both the search engine (`ProductSearch.tsx` and `product.service.js`) and the **ShopSense AI Chatbot** parse conversational sentences and multi-item requests such as:
+- `"I want Nike shoes"`
+- `"I want Nike shoes and a shirt"`
+- `"Best laptop under $1500"`
+- `"Show me a phone and headphones"`
+
+The parser splits conjunctions (`and`, `or`, `with`, `plus`, `,`), removes conversational filler words, expands category synonyms, and matches item keywords against product identity fields using word-boundary regular expressions.
+
+### 3. ShopSense AI Shopping Assistant Chatbot
+Located in `src/components/ChatBot.tsx` (and backed by `POST /api/chat`):
+- **Concise Product & Budget Discovery:** Responds to product, bundle, and budget queries (`"under $1500"`) with concise single-line advice and interactive product cards.
+- **Price, Distance & Review Trust Advisor:** Displays the lowest price, distance in `km` from the user's location, the **Best Genuine Pick**, and a **Fake Review Alert** when the lowest-price mart has high fake review inflation.
+- **Interactive Follow-Up Controls:** When a customer replies `"ok"`, `"thanks"`, or `"done"`, the assistant asks *"Do you want something else?"* and provides **`Suggest Products`** and **`Leave`** action buttons.
+
+### 4. Real Hugging Face BERT Review Authenticity Classifier
 Located in `SSA-server/server/services/bert.service.js`:
 1. **Transformer Inference:** Uses `@xenova/transformers` to load `Xenova/distilbert-base-uncased-finetuned-sst-2-english` locally in Node.js (no external API key required).
 2. **Contextual Sentiment & Softmax Confidence:** Each review is tokenized and passed through the BERT model to extract `bertSentiment` (`POSITIVE` / `NEGATIVE`) and `bertSentimentScore` (`0.000` – `1.000`).
@@ -90,22 +108,20 @@ Located in `SSA-server/server/services/bert.service.js`:
    - **Verified Buyer Experience:** Reviews mentioning concrete product/store details (factory seal, serial verification, warranty card, checkout wait time, evening parking) are labeled `GENUINE`.
 4. **Genuine Rating Adjustment:** Filters out `FAKE` reviews to compute each mart's true `genuineRating` so bot-inflated 5-star reviews cannot mislead shoppers.
 
-### 3. Customer-Driven Decision Making (No Biased Pre-Selection)
-ShopSense AI never pre-selects a mart or pushes biased badges like *"Lowest Price"* or *"Best Choice"*. Instead, it gives the customer transparent data—**Price**, **Distance (`km`)**, **Rating**, and **Genuine/Fake Review badges**—so a customer who wants the lowest price even with lower reviews, or the closest mart to their home, can choose freely.
-
 ---
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/products` | Fetch all 50 products (supports `?q=`, `?category=`, `?store=`, `?martId=`) |
+| `GET` | `/api/products` | Fetch & search products (supports conversational `?q=`, `?category=`, `?store=`, `?martId=`) |
 | `GET` | `/api/marts` | Fetch all 4 mart locations with GPS coordinates (`lat`, `lng`) |
 | `GET` | `/api/stores/:storeName/products` | Fetch products for a specific store (`martello`, `prodexa`, `storenta`) |
 | `POST` | `/api/reviews/analyze` | Run live Hugging Face BERT classification on custom review text(s) |
-| `POST` | `/api/auth/signup` | Register a new user account |
-| `POST` | `/api/auth/signin` | Authenticate user and receive JWT token |
-| `GET` | `/api/user/dashboard` | Fetch personalized user dashboard, wishlist, search history & AI recommendations |
+| `POST` | `/api/chat` | Conversational AI Shopping Assistant endpoint (multi-item & budget search) |
+| `POST` | `/api/auth/signup` | Register a new customer account |
+| `POST` | `/api/auth/login` | Authenticate customer and receive JWT token |
+| `GET` | `/api/auth/dashboard` | Fetch personalized user dashboard, wishlist, search history & recommendations |
 
 ### Example: Test Live BERT Classification (`POST /api/reviews/analyze`)
 ```bash
@@ -153,7 +169,7 @@ MONGODB_URI=mongodb://127.0.0.1:27017/shopsenseai
 JWT_SECRET=shopsense_super_secret_jwt_key_2025
 FRONTEND_URL=http://localhost:5173
 ```
-*(Note: If local MongoDB is not running, the backend automatically starts an in-memory MongoDB server and seeds all 50 products with BERT review analysis.)*
+*(Note: If local MongoDB is not running, the backend automatically starts an in-memory MongoDB server and seeds all products across the 4 marts with BERT review analysis.)*
 
 ```bash
 npm start
@@ -173,5 +189,5 @@ Open **`http://localhost:5173`** in your browser.
 
 - **Frontend:** React 18, TypeScript, Vite, Tailwind CSS (Light & Dark Mode), Lucide Icons, React Router v6, Axios
 - **Backend:** Node.js, Express.js, Mongoose / MongoDB, JSON Web Tokens (JWT), bcrypt
-- **AI / NLP:** Hugging Face `@xenova/transformers` (`Xenova/distilbert-base-uncased-finetuned-sst-2-english` via ONNX Runtime)
+- **AI / NLP:** Hugging Face `@xenova/transformers` (`Xenova/distilbert-base-uncased-finetuned-sst-2-english` via ONNX Runtime) + Conversational Multi-Item Query Parser
 - **Geolocation:** Browser Geolocation API + Haversine Distance Formula (`km` & estimated drive time)
