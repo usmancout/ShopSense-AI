@@ -45,7 +45,7 @@ function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: num
 const ProductSearch: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>(mockProducts);
   const [rawMarts, setRawMarts] = useState<MartLocation[]>(defaultMartLocations);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All Categories');
@@ -56,7 +56,7 @@ const ProductSearch: React.FC = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({
     lat: 31.4805,
@@ -103,24 +103,24 @@ const ProductSearch: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      setIsLoading(true);
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const response = await axios.get(`${apiBase}/api/products`, {
         params: {
           store: selectedStore,
           martId: selectedMart
-        }
+        },
+        timeout: 2500
       });
 
-      if (response.data?.products) {
+      if (Array.isArray(response.data?.products) && response.data.products.length > 0) {
         setAllProducts(response.data.products);
       }
-      if (response.data?.marts) {
+      if (Array.isArray(response.data?.marts) && response.data.marts.length > 0) {
         setRawMarts(response.data.marts);
       }
-    } catch (err) {
-      console.error('Failed to fetch from backend product catalog:', err);
-      setAllProducts(mockProducts);
+    } catch {
+      // Seamlessly use the full 80-product built-in catalog when backend is unreachable (e.g. Vercel static deployment)
+      setAllProducts(prev => (prev.length > 0 ? prev : mockProducts));
     } finally {
       setIsLoading(false);
     }
@@ -202,15 +202,82 @@ const ProductSearch: React.FC = () => {
     return filtered;
   };
 
-  // Products matching the specific search query (Displayed WITH side-by-side Mart Comparison)
-  // Note: Ignores category/store/price sidebar filters so searching a product name ALWAYS finds it even if a different category was previously selected
+  // Conversational & Multi-Item Natural Language Search Parser
+  // Supports queries like "i want nike shoes", "i want nike shoes and a shirt", or direct product names
   const searchedProducts = useMemo(() => {
     if (!isSearchingSpecificProduct) return [];
-    const q = searchQuery.trim().toLowerCase();
-    return productsWithDistance.filter(product =>
-      [product.name, product.brand, product.category, product.description, ...(product.tags || [])]
-        .some(val => val && val.toLowerCase().includes(q))
-    );
+    const cleaned = searchQuery.trim().toLowerCase();
+
+    const stopWords = new Set([
+      'i', 'want', 'need', 'looking', 'for', 'buy', 'get', 'show', 'me', 'find', 'search',
+      'some', 'a', 'an', 'the', 'please', 'can', 'you', 'give', 'have', 'in', 'at', 'from',
+      'with', 'good', 'best', 'cheap', 'price', 'near', 'my', 'house', 'mart', 'store',
+      'to', 'of', 'is', 'are', 'something', 'like', 'that'
+    ]);
+
+    const synonyms: Record<string, string[]> = {
+      shoe: ['shoes', 'sneakers', 'footwear'],
+      shoes: ['shoes', 'sneakers', 'footwear'],
+      sneaker: ['sneakers', 'shoes', 'footwear'],
+      sneakers: ['sneakers', 'shoes', 'footwear'],
+      shirt: ['shirt', 't-shirt', 'tshirt', 'polo'],
+      shirts: ['shirt', 't-shirt', 'tshirt', 'polo'],
+      tshirt: ['shirt', 't-shirt', 'tshirt'],
+      phone: ['smartphone'],
+      phones: ['smartphone'],
+      mobile: ['smartphone'],
+      smartphone: ['smartphone'],
+      laptop: ['laptop', 'macbook', 'xps', 'zephyrus', 'spectre', 'notebook'],
+      earphone: ['earbuds', 'airpods', 'headphones'],
+      earphones: ['earbuds', 'airpods', 'headphones'],
+      headphone: ['headphones', 'headset', 'earbuds'],
+      coat: ['jacket', 'puffer', 'outerwear'],
+      pant: ['jeans', 'pants', 'trousers', 'denim'],
+      pants: ['jeans', 'pants', 'trousers', 'denim']
+    };
+
+    // Split multi-item requests on "and", "or", ",", "&", "+", "also", "plus"
+    const clauses = cleaned
+      .split(/\b(?:and|or|also|plus|with)\b|[,&+]/i)
+      .map(c =>
+        c
+          .replace(/[^a-z0-9\s-]/g, ' ')
+          .split(/\s+/)
+          .filter(t => t.length > 1 && !stopWords.has(t))
+      )
+      .filter(tokens => tokens.length > 0);
+
+    return productsWithDistance.filter(product => {
+      const searchableText = [
+        product.name,
+        product.brand,
+        product.category,
+        product.description,
+        ...(product.tags || []),
+        ...(product.features || [])
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      if (searchableText.includes(cleaned)) return true;
+      if (clauses.length === 0) return false;
+
+      // Item keywords are matched only against identity fields (name, brand, category, tags)
+      const identityText = [product.name, product.brand, product.category, ...(product.tags || [])]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      // Matches if the product satisfies ANY requested item clause (e.g. "nike shoes" OR "shirt")
+      return clauses.some(tokens =>
+        tokens.every(token => {
+          const candidates = synonyms[token] || [token, token.replace(/s$/, '')];
+          // Word-start boundary so "phone" does not match inside "headphones"
+          return candidates.some(c => c && new RegExp(`(^|[^a-z0-9])${c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(identityText));
+        })
+      );
+    });
   }, [productsWithDistance, isSearchingSpecificProduct, searchQuery]);
 
   // Suggested / Relevant Products (Displayed NORMALLY without any mart locations or comparison tables)

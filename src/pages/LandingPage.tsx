@@ -26,7 +26,7 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  const quickSearches = ['Samsung', 'iPhone 15 Pro', 'MacBook Air', 'Sony WH-1000XM5', 'PlayStation 5', 'iPad Pro'];
+  const quickSearches = ['I want Nike shoes and a shirt', 'I want Nike shoes', 'Samsung', 'iPhone 16 Pro Max', 'MacBook Air', 'PlayStation 5'];
 
   const categories = [
     { name: 'Electronics', count: 'Smartphones, TVs & Audio', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -66,7 +66,7 @@ const LandingPage: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search a product (e.g. Samsung, iPhone 15, PS5, MacBook)..."
+                placeholder="Search by product name or phrase (e.g. 'I want Nike shoes and a shirt')..."
                 className="w-full px-3.5 py-2.5 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none text-sm sm:text-base font-medium"
               />
               <button

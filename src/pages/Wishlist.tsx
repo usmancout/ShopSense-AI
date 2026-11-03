@@ -6,20 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { WishlistCard } from '../components/wishlist';
 import { Spinner, Notification } from '../components/ui';
 import { useNotification } from '../hooks';
-
-interface WishlistItem {
-  productId: string;
-  name: string;
-  brand: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  store: string;
-  rating: number;
-  reviewCount: number;
-  description: string;
-  dateAdded: string;
-}
+import { getLocalWishlistItems, saveLocalWishlistItems, StoredWishlistItem } from '../hooks/useWishlist';
 
 const sortOptions = [
   { value: 'dateAdded', label: 'Recently Added' },
@@ -29,21 +16,24 @@ const sortOptions = [
   { value: 'name', label: 'Name A-Z' },
 ];
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Wishlist: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<StoredWishlistItem[]>(() => getLocalWishlistItems());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('dateAdded');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const { notification, showNotification, hideNotification } = useNotification();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchWishlist();
+    if (!isAuthenticated) {
+      navigate('/signin', { state: { from: { pathname: '/wishlist' } }, replace: true });
+      return;
     }
+    fetchWishlist();
   }, [isAuthenticated]);
 
   const sortedWishlist = useMemo(() => {
@@ -68,46 +58,47 @@ const Wishlist: React.FC = () => {
   }, [wishlistItems]);
 
   const fetchWishlist = async () => {
+    const local = getLocalWishlistItems();
+    setWishlistItems(local);
+
+    const token = localStorage.getItem('token');
+    if (!token || token.startsWith('local-jwt-')) return;
+
     try {
-      setIsLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` }
+      setIsLoading(local.length === 0);
+      const response = await axios.get(`${API_BASE}/api/auth/wishlist`, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 2500
       });
-      setWishlistItems(response.data.wishlist || []);
-    } catch (err) {
-      console.error('Failed to fetch wishlist:', err);
-      setError('Failed to load wishlist');
+      if (Array.isArray(response.data?.wishlist) && response.data.wishlist.length > 0) {
+        setWishlistItems(response.data.wishlist);
+        saveLocalWishlistItems(response.data.wishlist);
+      }
+    } catch {
+      // Keep local wishlist items
     } finally {
       setIsLoading(false);
     }
   };
 
   const removeFromWishlist = async (productId: string, productName: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/wishlist/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    const updated = wishlistItems.filter(item => item.productId !== productId);
+    setWishlistItems(updated);
+    saveLocalWishlistItems(updated);
+    showNotification('success', `"${productName}" removed from saved items`);
 
-      setWishlistItems(prev => prev.filter(item => item.productId !== productId));
-      showNotification('success', `"${productName}" removed from wishlist`);
-    } catch (err) {
-      console.error('Failed to remove from wishlist:', err);
-      showNotification('error', 'Failed to remove item from wishlist');
+    const token = localStorage.getItem('token');
+    if (token && !token.startsWith('local-jwt-')) {
+      try {
+        await axios.delete(`${API_BASE}/api/auth/wishlist/${productId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 2500
+        });
+      } catch {
+        // Already removed locally
+      }
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Spinner />
-          <p className="text-gray-400 mt-4">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -121,26 +112,8 @@ const Wishlist: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button
-              onClick={fetchWishlist}
-              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 bg-slate-50">
       {notification && (
         <Notification
           type={notification.type}
@@ -151,40 +124,40 @@ const Wishlist: React.FC = () => {
 
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">My Wishlist</h1>
-          <p className="text-gray-400 text-sm sm:text-base">
-            {wishlistItems.length} items saved • Total value: ${totalValue.toLocaleString()}
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-1">Saved Products</h1>
+          <p className="text-slate-500 text-sm sm:text-base">
+            {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved • Total value: ${totalValue.toLocaleString()}
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="flex items-center space-x-1 bg-gray-800 rounded-lg p-1">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1 bg-slate-100 rounded-xl p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 sm:p-2 rounded transition-colors ${
-                  viewMode === 'grid' ? 'bg-purple-600' : 'hover:bg-gray-700'
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'grid' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200/70'
                 }`}
               >
-                <Grid className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Grid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 sm:p-2 rounded transition-colors ${
-                  viewMode === 'list' ? 'bg-purple-600' : 'hover:bg-gray-700'
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'list' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200/70'
                 }`}
               >
-                <List className="h-4 w-4 sm:h-5 sm:w-5" />
+                <List className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <span className="text-gray-400 text-sm">Sort by:</span>
+          <div className="flex items-center space-x-3">
+            <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
             >
               {sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -210,15 +183,15 @@ const Wishlist: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-12 sm:py-16">
-            <div className="bg-gray-800 rounded-xl p-6 sm:p-8 max-w-md mx-auto">
-              <Heart className="h-12 w-12 sm:h-16 sm:w-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-lg sm:text-xl font-semibold mb-2">Your wishlist is empty</h3>
-              <p className="text-gray-400 mb-6 text-sm sm:text-base">
-                Start adding products you love to keep track of them and get price alerts.
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md mx-auto shadow-sm">
+              <Heart className="h-14 w-14 text-emerald-600/70 mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">No saved products yet</h3>
+              <p className="text-slate-500 mb-6 text-sm">
+                Save products while searching to compare their store prices and customer reviews anytime.
               </p>
               <button
                 onClick={() => navigate('/search')}
-                className="inline-block bg-purple-600 hover:bg-purple-700 px-4 sm:px-6 py-2 rounded-lg transition-colors text-sm sm:text-base"
+                className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition-colors text-sm shadow-sm"
               >
                 Browse Products
               </button>

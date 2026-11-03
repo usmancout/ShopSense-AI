@@ -19,7 +19,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, onSubmit,
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Search any product to compare prices, distances & customer reviews across marts..."
+          placeholder="Search by product name or natural request (e.g., 'I want Nike shoes and a shirt')..."
           className="w-full py-2.5 pr-4 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none text-sm sm:text-base font-medium"
         />
         {value.trim().length > 0 && (
