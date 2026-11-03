@@ -301,7 +301,24 @@ const ChatBot: React.FC = () => {
     const matchedProducts = matchProductsConversational(userText, maxBudget);
 
     if (matchedProducts.length > 0) {
-      const topProducts = matchedProducts.slice(0, 4).map(summarizeProductForChat);
+      // Pick up to 2 representative items (e.g. 1 shoe + 1 shirt for multi-item queries) so the chat stays compact
+      const uniqueCategoryPicks: Product[] = [];
+      const seenIcons = new Set<string>();
+      for (const p of matchedProducts) {
+        const key = p.tags?.[0] || p.category;
+        if (!seenIcons.has(key) && uniqueCategoryPicks.length < 2) {
+          seenIcons.add(key);
+          uniqueCategoryPicks.push(p);
+        }
+      }
+      for (const p of matchedProducts) {
+        if (uniqueCategoryPicks.length >= 2) break;
+        if (!uniqueCategoryPicks.some(u => u.id === p.id)) {
+          uniqueCategoryPicks.push(p);
+        }
+      }
+
+      const topProducts = uniqueCategoryPicks.map(summarizeProductForChat);
       const first = topProducts[0];
       const budgetNote = maxBudget ? ` under $${maxBudget}` : '';
 

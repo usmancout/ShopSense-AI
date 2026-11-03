@@ -38,7 +38,21 @@ When a customer searches for a specific product (e.g., `iPhone 16 Pro Max`), a c
 
 ---
 
-### 4. About Page — Platform Overview & Architecture
+### 4. Conversational & Multi-Item Natural Language Search (`"I want Nike shoes and a shirt"`)
+Customers can search using natural language sentences or multi-item requests (e.g., `"I want Nike shoes and a shirt"`). The search engine parses each item clause and displays all matching products with their available marts, live prices, and distances.
+
+![Conversational Multi-Item Search](docs/screenshots/6-natural-language-search.png)
+
+---
+
+### 5. ShopSense AI Shopping Assistant Chatbot
+The floating **Ask ShopSense AI** assistant is accessible from the bottom-right corner of every page. Customers can ask for products, bundles, or budget constraints (e.g., `"I want Nike shoes and a shirt"` or `"Best laptop under $1500"`), view the **Best Genuine Pick** and **Fake Review Alerts** inside interactive chat cards, jump directly to full mart comparisons, or open Google Maps directions. When a customer says `"ok"` or `"thanks"`, the assistant asks *"Do you want something else?"* with **`Suggest Products`** and **`Leave`** buttons.
+
+![ShopSense AI Shopping Assistant Chatbot](docs/screenshots/7-ai-chatbot.png)
+
+---
+
+### 6. About Page — Platform Overview & Architecture
 ![About ShopSense AI](docs/screenshots/5-about-page.png)
 
 ---
