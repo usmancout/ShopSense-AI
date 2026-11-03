@@ -1,4 +1,4 @@
-# ShopSense AI — Smart Multi-Mart Price, Distance & Review Comparison Platform
+# ShopSense AI Smart Multi-Mart Price, Distance & Review Comparison Platform
 
 **ShopSense AI** is a full-stack intelligent shopping comparison platform built with the **MERN Stack (MongoDB, Express.js, React + TypeScript, Node.js)**, **Hugging Face BERT (`@xenova/transformers`)**, and a **384-Dimensional RAG (Retrieval-Augmented Generation) + Vector Database Engine**.
 
