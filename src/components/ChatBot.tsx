@@ -342,13 +342,9 @@ const ChatBot: React.FC = () => {
       }
 
       const topProducts = uniqueCategoryPicks.map(summarizeProductForChat);
-      const first = topProducts[0];
-      const budgetNote = maxBudget ? ` under $${maxBudget}` : '';
-
-      const advice = `Found ${matchedProducts.length} ${matchedProducts.length === 1 ? 'product' : 'products'}${budgetNote}. Best pick: ${first.trustedMartName} ($${first.trustedMartPrice}).`;
 
       return {
-        text: advice,
+        text: '',
         products: topProducts,
         suggestedQuery: userText
           .replace(/(?:under|below|less than|max|budget(?:\s+of)?)\s*\$?\s*\d+/gi, '')
@@ -446,27 +442,29 @@ const ChatBot: React.FC = () => {
                 key={msg.id}
                 className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
               >
-                <div className="flex items-start space-x-2 max-w-[92%]">
-                  {msg.sender === 'bot' && (
-                    <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Sparkles className="h-3.5 w-3.5" />
+                {msg.text && (
+                  <div className="flex items-start space-x-2 max-w-[92%]">
+                    {msg.sender === 'bot' && (
+                      <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Sparkles className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+                    <div
+                      className={`rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-line shadow-sm ${
+                        msg.sender === 'user'
+                          ? 'bg-emerald-600 text-white font-medium rounded-br-sm'
+                          : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-sm'
+                      }`}
+                    >
+                      {msg.text}
                     </div>
-                  )}
-                  <div
-                    className={`rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-line shadow-sm ${
-                      msg.sender === 'user'
-                        ? 'bg-emerald-600 text-white font-medium rounded-br-sm'
-                        : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-sm'
-                    }`}
-                  >
-                    {msg.text}
+                    {msg.sender === 'user' && (
+                      <div className="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <User className="h-3.5 w-3.5" />
+                      </div>
+                    )}
                   </div>
-                  {msg.sender === 'user' && (
-                    <div className="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <User className="h-3.5 w-3.5" />
-                    </div>
-                  )}
-                </div>
+                )}
 
                 {/* Option Buttons: Suggest Products or Leave */}
                 {msg.showOptions && (
