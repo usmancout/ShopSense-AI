@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { X, Mail, Send, CheckCircle, ArrowLeft, ExternalLink, KeyRound } from 'lucide-react';
+import { X, Mail, Send, CheckCircle, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 
 interface ForgotPasswordModalProps {
@@ -14,11 +13,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [resetPath, setResetPath] = useState('');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [sentViaSmtp, setSentViaSmtp] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,25 +33,43 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
     setError('');
 
     try {
-      const response = await axios.post(
-        `${API_BASE}/api/auth/forgot-password`,
-        { email: cleanEmail },
-        { timeout: 3500 }
-      );
-      const token = response.data?.resetToken || `local-reset-${btoa(encodeURIComponent(cleanEmail))}-${Date.now()}`;
-      setResetPath(`/reset-password/${token}`);
-      setPreviewUrl(response.data?.previewUrl || null);
-      setSentViaSmtp(!!response.data?.sentViaSmtp);
+      const isLocal =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      if (isLocal) {
+        await axios.post(
+          `${API_BASE}/api/auth/forgot-password`,
+          { email: cleanEmail },
+          { timeout: 10000 }
+        );
+      } else {
+        // On Vercel, call the built-in serverless Gmail dispatcher /api/forgot-password
+        await axios.post(
+          '/api/forgot-password',
+          { email: cleanEmail, origin: window.location.origin },
+          { timeout: 10000 }
+        );
+      }
+
       localStorage.setItem('shopsense_pending_reset_email', cleanEmail);
       setIsSuccess(true);
-    } catch {
-      // Seamless fallback when backend is offline on Vercel static hosting
-      const localToken = `local-reset-${btoa(encodeURIComponent(cleanEmail))}-${Date.now()}`;
-      localStorage.setItem('shopsense_pending_reset_email', cleanEmail);
-      setResetPath(`/reset-password/${localToken}`);
-      setPreviewUrl(null);
-      setSentViaSmtp(false);
-      setIsSuccess(true);
+    } catch (err: any) {
+      // If one endpoint failed, try the other before showing any error
+      try {
+        await axios.post(
+          `${API_BASE}/api/auth/forgot-password`,
+          { email: cleanEmail },
+          { timeout: 8000 }
+        );
+        localStorage.setItem('shopsense_pending_reset_email', cleanEmail);
+        setIsSuccess(true);
+      } catch (fallbackErr: any) {
+        setError(
+          fallbackErr?.response?.data?.message ||
+            err?.response?.data?.message ||
+            'Failed to send reset email. Please try again.'
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,16 +79,13 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
     setEmail('');
     setError('');
     setIsSuccess(false);
-    setResetPath('');
-    setPreviewUrl(null);
     setIsLoading(false);
     onClose();
   };
 
-  const handleOpenResetLink = () => {
-    const target = resetPath || `/reset-password/local-reset-${btoa(encodeURIComponent(email.trim().toLowerCase()))}`;
-    handleClose();
-    navigate(target);
+  const handleSendAnother = () => {
+    setIsSuccess(false);
+    setError('');
   };
 
   if (!isOpen) return null;
@@ -101,7 +111,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
               </div>
               <h2 className="text-2xl font-extrabold text-slate-900 mb-1.5">Forgot Password?</h2>
               <p className="text-slate-500 text-xs sm:text-sm">
-                Enter your email address to generate your password reset link.
+                No worries! Enter your email address and we will send a password reset link to your inbox.
               </p>
             </div>
 
@@ -164,38 +174,27 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
             <div className="bg-emerald-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-emerald-600/20">
               <CheckCircle className="h-6 w-6 text-white" />
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-900 mb-1.5">Reset Link Ready</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-1.5">Check Your Email</h2>
             <p className="text-slate-500 text-xs sm:text-sm mb-5">
-              Password reset link generated for <strong className="text-slate-900">{email}</strong>
+              We have sent a password reset link to <strong className="text-slate-900">{email}</strong>
             </p>
 
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-3.5 rounded-2xl text-xs mb-5 text-left space-y-2">
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-3.5 rounded-2xl text-xs mb-5 text-left space-y-1.5">
               <p className="font-semibold">
-                {sentViaSmtp
-                  ? 'We sent the reset email to your inbox. You can also open the direct reset link below:'
-                  : 'Click the button below to open your secure password reset page immediately:'}
+                Please check your inbox (and spam folder) and click the "Reset Password" button inside the email.
               </p>
-              {previewUrl && (
-                <a
-                  href={previewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1 text-emerald-700 underline font-bold"
-                >
-                  <span>View Captured Email in Test Inbox</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
+              <p className="text-emerald-700">
+                The reset link is valid for 15 minutes.
+              </p>
             </div>
 
             <div className="space-y-2.5">
               <button
                 type="button"
-                onClick={handleOpenResetLink}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2 text-sm shadow-sm"
+                onClick={handleSendAnother}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-bold transition-colors text-sm shadow-sm"
               >
-                <KeyRound className="h-4 w-4" />
-                <span>Open Reset Password Page Now</span>
+                Send Another Email
               </button>
               <button
                 type="button"
