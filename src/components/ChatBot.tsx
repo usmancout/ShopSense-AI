@@ -44,6 +44,7 @@ interface ChatMessage {
   timestamp: string;
   products?: ChatProductSummary[];
   suggestedQuery?: string;
+  showOptions?: boolean;
 }
 
 const MARTS_INFO = [
@@ -246,14 +247,31 @@ const ChatBot: React.FC = () => {
   const generateBotResponse = (userText: string): Omit<ChatMessage, 'id' | 'sender' | 'timestamp'> => {
     const lower = userText.toLowerCase().trim();
 
-    // 1. Greeting / Help
+    // 1. Acknowledgment / Closing ("ok", "okay", "thanks", "thank you", "done", "got it", "no", "bye")
+    if (/^(ok|okay|k|kk|thanks|thank you|thx|got it|done|alright|great|nice|cool|fine|no|nope|nothing|bye|goodbye)\b[!.]*$/i.test(lower)) {
+      return {
+        text: 'Do you want something else?',
+        showOptions: true
+      };
+    }
+
+    // 2. Explicit "Suggest Products" button click or request
+    if (lower === 'suggest products' || lower === 'show suggestions') {
+      const topPicks = [mockProducts[0], mockProducts[24], mockProducts[30]].filter(Boolean).map(summarizeProductForChat);
+      return {
+        text: 'Here are some popular products across our marts:',
+        products: topPicks
+      };
+    }
+
+    // 3. Greeting / Help
     if (/^(hi|hello|hey|salam|assalam|help|start|how do you work)\b/i.test(lower) && lower.split(/\s+/).length <= 5) {
       return {
         text: 'Hello! Tell me a product or budget to compare marts.'
       };
     }
 
-    // 2. Closest Mart / Mart Information Query
+    // 4. Closest Mart / Mart Information Query
     if (/\b(which mart is closest|nearest mart|closest mart|all marts|list of marts|where are the marts)\b/i.test(lower) && !/\b(iphone|samsung|nike|laptop|shoes|shirt|airpods|sony|watch|tv|book)\b/i.test(lower)) {
       const sortedMarts = MARTS_INFO.map(m => ({
         ...m,
@@ -269,14 +287,14 @@ const ChatBot: React.FC = () => {
       };
     }
 
-    // 3. Review Authenticity Question
+    // 5. Review Authenticity Question
     if (/\b(fake review|genuine review|storenta review|trustworthy|are reviews real)\b/i.test(lower) && !/\b(iphone|samsung|nike|laptop|shoes|shirt)\b/i.test(lower)) {
       return {
         text: 'Prodexa Central (88%) and Martello West (86%) have the most Genuine Reviews. Storenta Plaza has 60% Fake Reviews.'
       };
     }
 
-    // 4. Product & Multi-Item Search + Budget Filtering
+    // 6. Product & Multi-Item Search + Budget Filtering
     const budgetMatch = userText.match(/(?:under|below|less than|max|budget(?:\s+of)?)\s*\$?\s*(\d+)/i);
     const maxBudget = budgetMatch ? Number(budgetMatch[1]) : null;
 
@@ -299,11 +317,10 @@ const ChatBot: React.FC = () => {
       };
     }
 
-    // Fallback when no specific product matched
-    const fallbackPicks = mockProducts.slice(0, 3).map(summarizeProductForChat);
+    // Fallback when no specific product matched -> Ask if they want suggestions or to leave
     return {
-      text: `No exact match for "${userText}". Here are top picks:`,
-      products: fallbackPicks
+      text: `No exact match for "${userText}". Do you want something else?`,
+      showOptions: true
     };
   };
 
@@ -413,6 +430,26 @@ const ChatBot: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Option Buttons: Suggest Products or Leave */}
+                {msg.showOptions && (
+                  <div className="mt-2 pl-8 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSend('Suggest Products')}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm"
+                    >
+                      Suggest Products
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition-colors"
+                    >
+                      Leave
+                    </button>
+                  </div>
+                )}
 
                 {/* Product Comparison Cards Inside Chat */}
                 {msg.products && msg.products.length > 0 && (
