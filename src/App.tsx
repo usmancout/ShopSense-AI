@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ChatBot from './components/ChatBot';
 import { Spinner } from './components/ui';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -70,6 +71,7 @@ function App() {
                 </Routes>
               </Suspense>
             </main>
+            <ChatBot />
             <Footer />
           </div>
         </Router>
